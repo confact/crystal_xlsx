@@ -1,6 +1,6 @@
-# xlsxwriter
+# crystal_xlsx
 
-TODO: Write a description here
+A library to create xlsx (Excel 2006) file with styles, column width and freeze rows.
 
 ## Installation
 
@@ -8,8 +8,8 @@ TODO: Write a description here
 
    ```yaml
    dependencies:
-     xlsxwriter:
-       github: your-github-user/xlsxwriter
+     crystal_xlsx:
+       github: confact/crystal_xlsx
    ```
 
 2. Run `shards install`
@@ -17,13 +17,13 @@ TODO: Write a description here
 ## Usage
 
 ```crystal
-require "xlsxwriter"
+require "crystal_xlsx"
 ```
 
 And then execute:
 
 ```crystal
-workbook = Xlsxwriter::Workbook.new
+workbook = CrystalXlsx::Workbook.new
 
 worksheet = workbook.add_worksheet("A worksheet")
 
@@ -38,7 +38,7 @@ TODO: Write development instructions here
 
 ## Contributing
 
-1. Fork it (<https://github.com/your-github-user/xlsxwriter/fork>)
+1. Fork it (<https://github.com/confact/crystal_xlsx/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
@@ -46,4 +46,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [Håkan Nylén](https://github.com/your-github-user) - creator and maintainer
+- [Håkan Nylén](https://github.com/confact) - creator and maintainer
