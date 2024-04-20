@@ -6,7 +6,7 @@ class CrystalXlsx::Style
       xml.element("styleSheet", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main") do
         # Number formats
         xml.element("numFmts", count: "1") do
-          xml.element("numFmt", numFmtId: "164", formatCode: "yyyy-mm-dd hh:mm:ss")
+          xml.element("numFmt", numFmtId: "165", formatCode: "yyyy-mm-dd hh:mm:ss")
         end
         
         # Fonts
@@ -58,8 +58,8 @@ class CrystalXlsx::Style
         
         # Cell style XFs
         xml.element("cellStyleXfs", count: "#{formats.size + 2}") do
-          xml.element("xf", numFmtId: "0", fontId: "0", fillId: "0", borderId: "0", applyNumberFormat: "1")
-          xml.element("xf", numFmtId: "22", fontId: "0", fillId: "0", borderId: "0", applyNumberFormat: "1")
+          xml.element("xf", numFmtId: "0", fontId: "0", fillId: "0", borderId: "0")
+          xml.element("xf", numFmtId: "165", fontId: "0", fillId: "0", borderId: "0")
 
           # Custom styles
           formats.each do |format|
@@ -70,8 +70,8 @@ class CrystalXlsx::Style
         # Cell XFs
         xml.element("cellXfs", count: "#{formats.size + 2}") do
           # Default style
-          xml.element("xf", numFmtId: "0", fontId: "0", fillId: "0", borderId: "0", applyNumberFormat: "1")
-          xml.element("xf", numFmtId: "22", fontId: "0", fillId: "0", borderId: "0", applyNumberFormat: "1")
+          xml.element("xf", numFmtId: "0", fontId: "0", fillId: "0", borderId: "0")
+          xml.element("xf", numFmtId: "165", fontId: "0", fillId: "0", borderId: "0")
           
           # Custom styles
           formats.each do |format|

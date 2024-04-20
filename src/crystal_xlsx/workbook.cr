@@ -13,6 +13,13 @@ class CrystalXlsx::Workbook
     worksheet
   end
 
+  def add_worksheet(name, &)
+    worksheet = CrystalXlsx::Worksheet.new(name)
+    worksheet.workbook = self
+    @worksheets << worksheet
+    yield worksheet
+  end
+
   def add_format(**args) : CrystalXlsx::Format
     format = CrystalXlsx::Format.new(**args)
     style.formats << format
@@ -28,15 +35,19 @@ class CrystalXlsx::Workbook
     end
   end
 
+  def save(filepath = "./temp.xlsx")
+    close(filepath)
+  end
+
   private def build_zip_contents(zip)
     zip.add("[Content_Types].xml") do |io|
       generate_content_type_xml(io)
     end
     zip.add("docProps/app.xml") do |io|
-      generate_docProps_app_xml(io)
+      CrystalXlsx::DocPropsApp.to_xml(worksheets, io)
     end
     zip.add("docProps/core.xml") do |io|
-      generate_docProps_core_xml(io)
+      CrystalXlsx::DocPropsCore.to_xml(io)
     end
     zip.add("xl/workbook.xml") do |io|
       create_workbook_xml(io)
@@ -98,84 +109,6 @@ class CrystalXlsx::Workbook
         worksheets.each_with_index do |worksheet, index|
           xml.element("Override", "PartName": "/xl/worksheets/sheet#{index + 1}.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")
         end
-      end
-    end
-  end
-
-  private def generate_docProps_app_xml(io : IO)
-    XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
-      xml.element("Properties", xmlns: "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties", "xmlns:vt": "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes") do
-        xml.element("Application") do
-          xml.text("Microsoft Excel")
-        end
-        xml.element("AppVersion") do
-          xml.text("16.0300")
-        end
-        xml.element("DocSecurity") do
-          xml.text("0")
-        end
-        xml.element("ScaleCrop") do
-          xml.text("false")
-        end
-        xml.element("HeadingPairs") do
-          xml.element("vt:vector", size: "2", "baseType": "variant") do
-            xml.element("vt:variant") do
-              xml.element("vt:lpstr") do
-                xml.text("Worksheets")
-              end
-            end
-            xml.element("vt:variant") do
-              xml.element("vt:i4") do
-                xml.text("1")
-              end
-            end
-          end
-        end
-        xml.element("TitlesOfParts") do
-          worksheets.each_with_index do |worksheet, index|
-            xml.element("vt:vector", size: "1", "baseType": "lpstr") do
-              xml.element("vt:lpstr") do
-                xml.text(worksheet.name)
-              end
-            end
-          end
-        end
-        xml.element("Manager")
-        xml.element("Company")
-        xml.element("LinksUpToDate") do
-          xml.text("false")
-        end
-        xml.element("SharedDoc") do
-          xml.text("false")
-        end
-        xml.element("HyperlinksChanged") do
-          xml.text("false")
-        end
-      end
-    end
-  end
-
-  private def generate_docProps_core_xml(io : IO)
-    time = Time.utc
-    XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
-      xml.element("cp:coreProperties", "xmlns:cp": "http://schemas.openxmlformats.org/package/2006/metadata/core-properties", "xmlns:dc": "http://purl.org/dc/elements/1.1/", "xmlns:dcterms": "http://purl.org/dc/terms/", "xmlns:dcmitype": "http://purl.org/dc/dcmitype/", "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance") do
-        xml.element("dc:title")
-        xml.element("dc:subject")
-        xml.element("dc:creator") do
-          xml.text("#{CrystalXlsx::NAME} #{CrystalXlsx::VERSION}")
-        end
-        xml.element("cp:keywords")
-        xml.element("dc:description")
-        xml.element("cp:lastModifiedBy") do
-          xml.text("#{CrystalXlsx::NAME} #{CrystalXlsx::VERSION}")
-        end
-        xml.element("dcterms:created", "xsi:type": "dcterms:W3CDTF") do
-          xml.text(Time::Format::ISO_8601_DATE_TIME.format(time))
-        end
-        xml.element("dcterms:modified", "xsi:type": "dcterms:W3CDTF") do
-          xml.text(Time::Format::ISO_8601_DATE_TIME.format(time))
-        end
-        xml.element("cp:category")
       end
     end
   end
