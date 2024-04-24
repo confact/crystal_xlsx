@@ -6,5 +6,6 @@ module CrystalXlsx
 
   NAME = "Crystal.xlsx"
 
-  # TODO: Put your code here
+  EPOCH          = Time.utc(1899, 12, 30).to_unix_f
+  DAY_IN_SECONDS = 86_400
 end

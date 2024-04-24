@@ -29,7 +29,7 @@ class CrystalXlsx::DocPropsApp
           end
         end
         xml.element("TitlesOfParts") do
-          worksheets.each_with_index do |worksheet, index|
+          worksheets.each do |worksheet|
             xml.element("vt:vector", size: "1", "baseType": "lpstr") do
               xml.element("vt:lpstr") do
                 xml.text(worksheet.name)

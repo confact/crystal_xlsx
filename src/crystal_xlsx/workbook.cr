@@ -5,38 +5,53 @@ class CrystalXlsx::Workbook
   property shared_strings : CrystalXlsx::SharedStrings = SharedStrings.new
   property theme : CrystalXlsx::Theme = CrystalXlsx::Theme.new
   property style : CrystalXlsx::Style = CrystalXlsx::Style.new
+  property? enable_shared_strings : Bool = true
 
   def add_worksheet(name)
-    worksheet = CrystalXlsx::Worksheet.new(name)
-    worksheet.workbook = self
+    worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
     @worksheets << worksheet
     worksheet
   end
 
   def add_worksheet(name, &)
-    worksheet = CrystalXlsx::Worksheet.new(name)
-    worksheet.workbook = self
+    worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
     @worksheets << worksheet
     yield worksheet
   end
 
-  def add_format(**args) : CrystalXlsx::Format
-    format = CrystalXlsx::Format.new(**args)
-    style.formats << format
-    format.index = style.formats.size + 2
-    format
+  def add_format(**options)
+    style.add_format(**options)
+  end
+
+  def add_format(format : CrystalXlsx::Format)
+    style.add_format(format)
   end
 
   def close(filepath = "./temp.xlsx")
     File.open(filepath, "w") do |file|
-      Compress::Zip::Writer.open(file) do |zip|
-        build_zip_contents(zip)
-      end
+      to_io(file)
     end
   end
 
   def save(filepath = "./temp.xlsx")
     close(filepath)
+  end
+
+  def read : IO
+    stream = IO::Memory.new
+    to_io(stream)
+    stream.rewind
+    stream
+  end
+
+  def read_string : String
+    read.to_s
+  end
+
+  def to_io(io)
+    Compress::Zip::Writer.open(io) do |zip|
+      build_zip_contents(zip)
+    end
   end
 
   private def build_zip_contents(zip)
@@ -67,7 +82,7 @@ class CrystalXlsx::Workbook
 
     zip.add("xl/sharedStrings.xml") do |io|
       shared_strings.to_xml(io)
-    end
+    end if enable_shared_strings?
 
     worksheets.each_with_index do |worksheet, index|
       zip.add("xl/worksheets/sheet#{index + 1}.xml") do |io|
@@ -86,10 +101,10 @@ class CrystalXlsx::Workbook
         end
         xml.element("sheets") do
           worksheets.each_with_index do |sheet, index|
-            xml.element("sheet", name: sheet.name, sheetId: "#{index + 1}", "r:id": "rId#{index + 1}")
+            xml.element("sheet", name: sheet.name, sheetId: index + 1, "r:id": "rId#{index + 1}")
           end
         end
-        xml.element("calcPr", fullCalcOnLoad: "1")
+        xml.element("calcPr", calcId: "0")
       end
     end
   end
@@ -99,16 +114,17 @@ class CrystalXlsx::Workbook
       xml.element("Types", xmlns: "http://schemas.openxmlformats.org/package/2006/content-types") do
         xml.element("Default", "Extension": "rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml")
         xml.element("Default", "Extension": "xml", "ContentType": "application/xml")
-        xml.element("Override", "PartName": "/docProps/core.xml", "ContentType": "application/vnd.openxmlformats-package.core-properties+xml")
-        xml.element("Override", "PartName": "/docProps/app.xml", "ContentType": "application/vnd.openxmlformats-officedocument.extended-properties+xml")
         xml.element("Override", "PartName": "/xl/workbook.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")
-        xml.element("Override", "PartName": "/xl/sharedStrings.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml")
-        xml.element("Override", "PartName": "/xl/styles.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml")
-        xml.element("Override", "PartName": "/xl/theme/theme1.xml", "ContentType": "application/vnd.openxmlformats-officedocument.theme+xml")
 
-        worksheets.each_with_index do |worksheet, index|
+        worksheets.each_with_index do |_, index|
           xml.element("Override", "PartName": "/xl/worksheets/sheet#{index + 1}.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")
         end
+
+        xml.element("Override", "PartName": "/xl/theme/theme1.xml", "ContentType": "application/vnd.openxmlformats-officedocument.theme+xml")
+        xml.element("Override", "PartName": "/xl/styles.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml")
+        xml.element("Override", "PartName": "/xl/sharedStrings.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml") if enable_shared_strings?
+        xml.element("Override", "PartName": "/docProps/core.xml", "ContentType": "application/vnd.openxmlformats-package.core-properties+xml")
+        xml.element("Override", "PartName": "/docProps/app.xml", "ContentType": "application/vnd.openxmlformats-officedocument.extended-properties+xml")
       end
     end
   end
@@ -127,13 +143,13 @@ class CrystalXlsx::Workbook
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("Relationships", "xmlns": "http://schemas.openxmlformats.org/package/2006/relationships") do
         # Relationships to sheets
-        worksheets.each_with_index do |sheet, index|
+        worksheets.each_with_index do |_, index|
           xml.element("Relationship", Id: "rId#{index + 1}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", Target: "worksheets/sheet#{index + 1}.xml")
         end
-  
+
         # Relationship to shared strings (if used)
-        xml.element("Relationship", Id: "rId#{worksheets.size + 1}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", Target: "sharedStrings.xml")
-  
+        xml.element("Relationship", Id: "rId#{worksheets.size + 1}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", Target: "sharedStrings.xml") if enable_shared_strings?
+
         # Relationship to styles (if used)
         xml.element("Relationship", Id: "rId#{worksheets.size + 2}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", Target: "styles.xml")
         xml.element("Relationship", Id: "rId#{worksheets.size + 3}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme", Target: "theme/theme1.xml")

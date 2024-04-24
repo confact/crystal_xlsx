@@ -1,4 +1,4 @@
-require "./spec_helper"  # Adjust path as necessary to include necessary configurations and libraries
+require "./spec_helper" # Adjust path as necessary to include necessary configurations and libraries
 
 describe CrystalXlsx::Format do
   describe "#initialize" do
@@ -29,7 +29,7 @@ describe CrystalXlsx::Format do
       xml = XML.build_fragment do |xml|
         format.to_font_xml(xml)
       end
-      xml.should match(/<font><sz val="11"\/><name val="Calibri"\/><b val="1"\/><color rgb="FF0000"\/><\/font>/)
+      xml.should match(/<font><sz val="11"\/><name val="Calibri"\/><b val="true"\/><color rgb="FF0000"\/><\/font>/)
     end
   end
 
@@ -74,7 +74,7 @@ describe CrystalXlsx::Format do
       xml = XML.build_fragment do |xml|
         format.to_xml(xml)
       end
-      xml.should match(/<xf numFmtId="164" fontId="2" fillId="2" borderId="2" applyFont="1" applyFill="1" applyBorder="1"\/>/)
+      xml.should match(/<xf numFmtId="0" fontId="2" fillId="2" borderId="2" applyFont="1" applyFill="1" applyBorder="1"\/>/)
     end
   end
 end

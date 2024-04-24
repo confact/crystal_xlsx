@@ -30,16 +30,16 @@ class CrystalXlsx::Theme
 
   private def define_simple_colors(xml)
     simple_colors = {
-      "a:dk2" => "44546A",
-      "a:lt2" => "E7E6E6",
-      "a:accent1" => "4472C4",
-      "a:accent2" => "ED7D31",
-      "a:accent3" => "A5A5A5",
-      "a:accent4" => "FFC000",
-      "a:accent5" => "5B9BD5",
-      "a:accent6" => "70AD47",
-      "a:hlink" => "0563C1",
-      "a:folHlink" => "954F72"
+      "a:dk2"      => "44546A",
+      "a:lt2"      => "E7E6E6",
+      "a:accent1"  => "4472C4",
+      "a:accent2"  => "ED7D31",
+      "a:accent3"  => "A5A5A5",
+      "a:accent4"  => "FFC000",
+      "a:accent5"  => "5B9BD5",
+      "a:accent6"  => "70AD47",
+      "a:hlink"    => "0563C1",
+      "a:folHlink" => "954F72",
     }
     simple_colors.each do |tag, color|
       xml.element(tag) do
@@ -76,7 +76,7 @@ class CrystalXlsx::Theme
       "Thaa" => "MV Boli", "Deva" => "Mangal", "Telu" => "Gautami", "Taml" => "Latha",
       "Syrc" => "Estrangelo Edessa", "Orya" => "Kalinga", "Mlym" => "Kartika",
       "Laoo" => "DokChampa", "Sinh" => "Iskoola Pota", "Mong" => "Mongolian Baiti",
-      "Viet" => "Times New Roman", "Uigh" => "Microsoft Uighur", "Geor" => "Sylfaen"
+      "Viet" => "Times New Roman", "Uigh" => "Microsoft Uighur", "Geor" => "Sylfaen",
     }
   end
 end
