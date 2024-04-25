@@ -9,12 +9,16 @@ class CrystalXlsx::Style
 
   def add_format(format : CrystalXlsx::Format) : CrystalXlsx::Format
     format_hash = generate_format_hash(format)
-    unless format_hashes.includes?(format_hash)
-      format_hashes.add(format_hash)
-      format.index = format_hashes.size
-      formats << format
-      return format
-    end
+
+    return find_format(format_hash) if format_hashes.includes?(format_hash)
+
+    format_hashes.add(format_hash)
+    format.index = format_hashes.size
+    formats << format
+    format
+  end
+
+  def find_format(format_hash : String) : CrystalXlsx::Format
     formats.find! { |fmt| generate_format_hash(fmt) == format_hash }
   end
 
@@ -22,11 +26,13 @@ class CrystalXlsx::Style
     String.build do |str|
       str << format.font_name
       str << format.font_size
-      str << format.fill_color
+      str << format.text_color
       str << format.bg_color
       str << format.bold?
       str << format.border?
       str << format.num_form_id
+      str << format.horizontal_alignment
+      str << format.vertical_alignment
     end
   end
 

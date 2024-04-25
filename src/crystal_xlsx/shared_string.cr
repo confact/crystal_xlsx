@@ -1,12 +1,14 @@
 class CrystalXlsx::SharedStrings
-  property strings : Hash(String, Int32) = Hash(String, Int32).new
+  property string_indices : Hash(String, Int32) = {} of String => Int32
+  property strings : Array(String) = [] of String
+  property string_set : Set(String) = Set(String).new
   property count : Int32 = 0
 
   def add(string : String) : Int32
-    if @strings.has_key?(string)
-      @strings[string] += 1
-    else
-      @strings[string] = 1
+    unless string_set.includes?(string)
+      @strings << string
+      @string_indices[string] = strings.size - 1
+      @string_set << string
     end
     @count += 1
     index(string)
@@ -19,7 +21,7 @@ class CrystalXlsx::SharedStrings
   end
 
   def index(string : String) : Int32
-    @strings.keys.index!(string)
+    @string_indices[string]? || raise("String not found: #{string}")
   end
 
   def size
@@ -29,7 +31,7 @@ class CrystalXlsx::SharedStrings
   def to_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("sst", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main", count: count, uniqueCount: size) do
-        strings.each_key do |string|
+        strings.each do |string|
           xml.element("si") do
             xml.element("t") do
               xml.text(string)

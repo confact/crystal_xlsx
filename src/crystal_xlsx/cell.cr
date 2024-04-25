@@ -89,16 +89,18 @@ class CrystalXlsx::Cell
   private def need_format_of_value
     return unless value.is_a?(Time) || value.is_a?(Float32) || value.is_a?(Float64)
 
-    num_id = if value.is_a?(Time)
-               22
-             else
-               2
-             end
-
-    new_format = @format.try(&.merge(num_form_id: num_id)) || CrystalXlsx::Format.new(num_form_id: num_id)
+    new_format = @format.try(&.merge(num_form_id: number_format_id)) || CrystalXlsx::Format.new(num_form_id: number_format_id)
 
     # add  to all formats
     @format = row.worksheet.workbook.try(&.add_format(new_format))
+  end
+
+  private def number_format_id : Int32
+    case value
+    when Time             then 22
+    when Float32, Float64 then 2
+    else                       0
+    end
   end
 
   private def excel_serial_date(date : Time)
