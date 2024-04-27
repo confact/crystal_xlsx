@@ -28,13 +28,90 @@ workbook = CrystalXlsx::Workbook.new
 worksheet = workbook.add_worksheet("A worksheet")
 
 worksheet.add_row(["Hello", "World"])
+# or
+# worksheet << ["Hello", "World"]
 
 workbook.close("./hello_world.xlsx")
 ```
 
+You can set the column width and freeze rows:
+
+```crystal
+workbook = CrystalXlsx::Workbook.new
+
+worksheet = workbook.add_worksheet("A worksheet")
+
+worksheet.add_row(["Hello", "World"])
+
+worksheet.freeze_row(1) # Freeze the first row
+
+worksheet.columns_width = [10, 20] # Set the width of the first column to 10 and the second to 20
+
+workbook.close("./hello_world.xlsx")
+```
+
+You can also set the style of the cells:
+
+```crystal
+workbook = CrystalXlsx::Workbook.new
+
+worksheet = workbook.add_worksheet("A worksheet")
+
+style = workbook.add_style(
+  font_name: "Arial",
+  font_size: 12,
+  bold: true,
+  text_color: "FF0000",
+  bg_color: "FFFF00",
+  horizontal_align: "center",
+  vertical_align: "center"
+)
+
+worksheet.add_row(["Hello", "World"], style)
+
+workbook.close("./hello_world.xlsx")
+```
+
+You can get the result of the workbook as a string:
+
+```crystal
+workbook = CrystalXlsx::Workbook.new
+
+worksheet = workbook.add_worksheet("A worksheet")
+
+worksheet.add_row(["Hello", "World"])
+
+puts workbook.to_s
+
+# or send it to a IO
+workbook.to_io(STDOUT)
+
+```
+
+## Known issues
+- The library does not support formulas
+- The library does not support images
+- The library does not support charts
+- The library gets corrupt warning when using multiple sheets 
+
+
+## Benchmark
+As I made this library due to issues of ruby libraries being slow, I have made a benchmark to compare them. I compare it with the benchmarks at [fast_excel](https://github.com/Paxa/fast_excel) that does a benchmark of 20k write rows and compare it with caxls and write_xlsx.
+
+```
+           FastExcel:        1.4 i/s
+               Axlsx:        0.4 i/s - 3.46x  slower
+          write_xlsx:        0.1 i/s - 17.04x  slower
+```
+And crystal_xlsx (Using Crystal's Benchmark module):
+```
+        write 20k rows   3.52  (284.13ms) (± 2.35%)  271MB/op
+```
+
 ## Development
 
-TODO: Write development instructions here
+Feel free to contribute to the project. You can run the tests with `crystal spec`.
+
 
 ## Contributing
 

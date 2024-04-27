@@ -18,6 +18,10 @@ class CrystalXlsx::Worksheet
     rows << row
   end
 
+  def <<(data : CrystalXlsx::Row::ValuesTypes)
+    add_row(data)
+  end
+
   def column_width(column : Int32, width : Float64 | Int32)
     width = width.to_f if width.is_a?(Int32)
     @cols.add_column_width(column, width)

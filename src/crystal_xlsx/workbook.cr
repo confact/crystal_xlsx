@@ -44,7 +44,7 @@ class CrystalXlsx::Workbook
     stream
   end
 
-  def read_string : String
+  def to_s : String
     read.to_s
   end
 
