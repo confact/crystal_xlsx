@@ -6,33 +6,51 @@ class CrystalXlsx::Workbook
   property theme : CrystalXlsx::Theme = CrystalXlsx::Theme.new
   property style : CrystalXlsx::Style = CrystalXlsx::Style.new
   property? enable_shared_strings : Bool = true
+  property workbook_rels : CrystalXlsx::Rels = CrystalXlsx::Rels.new
+  property rels : CrystalXlsx::Rels = CrystalXlsx::Rels.new
 
+  # Add a worksheet to the workbook
+  # @param name [String] The name of the worksheet
+  # @return [CrystalXlsx::Worksheet] The worksheet object
   def add_worksheet(name)
     worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
     @worksheets << worksheet
     worksheet
   end
 
+  # Add a worksheet to the workbook
+  # @param name [String] The name of the worksheet
+  # @yieldparam worksheet [CrystalXlsx::Worksheet] The worksheet object
   def add_worksheet(name, &)
     worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
     @worksheets << worksheet
     yield worksheet
   end
 
+  # Add a style format to the workbook
+  # @param options [Hash] The options for the format
+  # @return [CrystalXlsx::Format] The format object
   def add_format(**options)
     style.add_format(**options)
   end
 
+  # Add a style format to the workbook
+  # @param format [CrystalXlsx::Format] The format object
+  # @return [CrystalXlsx::Format] The format object
   def add_format(format : CrystalXlsx::Format)
     style.add_format(format)
   end
 
+  # close the workbook and write it to a file
+  # @param filepath [String] The path to the file
+  # @return void
   def close(filepath = "./temp.xlsx")
     File.open(filepath, "w") do |file|
       to_io(file)
     end
   end
 
+  # alias for close
   def save(filepath = "./temp.xlsx")
     close(filepath)
   end
@@ -130,30 +148,21 @@ class CrystalXlsx::Workbook
   end
 
   private def generate_root_rels_xml(io : IO)
-    XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
-      xml.element("Relationships", "xmlns": "http://schemas.openxmlformats.org/package/2006/relationships") do
-        xml.element("Relationship", Id: "rId1", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument", Target: "xl/workbook.xml")
-        xml.element("Relationship", Id: "rId2", Type: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties", Target: "docProps/core.xml")
-        xml.element("Relationship", Id: "rId3", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties", Target: "docProps/app.xml")
-      end
-    end
+    rels << {id: "rId1", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument", target: "xl/workbook.xml"}
+    rels << {id: "rId2", type: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties", target: "docProps/core.xml"}
+    rels << {id: "rId3", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties", target: "docProps/app.xml"}
+
+    rels.to_xml(io)
   end
 
   private def generate_workbook_rels_xml(io : IO)
-    XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
-      xml.element("Relationships", "xmlns": "http://schemas.openxmlformats.org/package/2006/relationships") do
-        # Relationships to sheets
-        worksheets.each_with_index do |_, index|
-          xml.element("Relationship", Id: "rId#{index + 1}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", Target: "worksheets/sheet#{index + 1}.xml")
-        end
-
-        # Relationship to shared strings (if used)
-        xml.element("Relationship", Id: "rId#{worksheets.size + 1}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", Target: "sharedStrings.xml") if enable_shared_strings?
-
-        # Relationship to styles (if used)
-        xml.element("Relationship", Id: "rId#{worksheets.size + 2}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", Target: "styles.xml")
-        xml.element("Relationship", Id: "rId#{worksheets.size + 3}", Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme", Target: "theme/theme1.xml")
-      end
+    worksheets.each_with_index do |_, index|
+      workbook_rels << {id: "rId#{index + 1}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", target: "worksheets/sheet#{index + 1}.xml"}
     end
+    workbook_rels << {id: "rId#{worksheets.size + 1}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", target: "sharedStrings.xml"} if enable_shared_strings?
+    workbook_rels << {id: "rId#{worksheets.size + 2}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", target: "styles.xml"}
+    workbook_rels << {id: "rId#{worksheets.size + 3}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme", target: "theme/theme1.xml"}
+
+    workbook_rels.to_xml(io)
   end
 end
