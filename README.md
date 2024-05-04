@@ -57,7 +57,7 @@ workbook = CrystalXlsx::Workbook.new
 
 worksheet = workbook.add_worksheet("A worksheet")
 
-style = workbook.add_style(
+style = workbook.add_format(
   font_name: "Arial",
   font_size: 12,
   bold: true,
@@ -92,7 +92,6 @@ workbook.to_io(STDOUT)
 - The library does not support formulas
 - The library does not support images
 - The library does not support charts
-- The library gets corrupt warning when using multiple sheets 
 
 
 ## Benchmark

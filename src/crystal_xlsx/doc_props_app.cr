@@ -23,14 +23,14 @@ class CrystalXlsx::DocPropsApp
             end
             xml.element("vt:variant") do
               xml.element("vt:i4") do
-                xml.text("1")
+                xml.text(worksheets.size.to_s)
               end
             end
           end
         end
         xml.element("TitlesOfParts") do
-          worksheets.each do |worksheet|
-            xml.element("vt:vector", size: "1", "baseType": "lpstr") do
+          xml.element("vt:vector", size: worksheets.size, "baseType": "lpstr") do
+            worksheets.each do |worksheet|
               xml.element("vt:lpstr") do
                 xml.text(worksheet.name)
               end
