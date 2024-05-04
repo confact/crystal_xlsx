@@ -18,6 +18,14 @@ class CrystalXlsx::Row
     end
   end
 
+  def [](index)
+    @cells[index]
+  end
+
+  def <<(values)
+    add(values)
+  end
+
   def size
     @cells.size
   end

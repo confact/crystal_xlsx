@@ -47,7 +47,7 @@ class CrystalXlsx::Format
     xml.element("fill") do
       xml.element("patternFill", patternType: "solid") do
         xml.element("fgColor", rgb: "FF#{bg_color}") if bg_color
-        xml.element("bgColor", indexed: "0")  # This sets bg color to auto
+        xml.element("bgColor", indexed: "0") # This sets bg color to auto
       end
     end
   end
