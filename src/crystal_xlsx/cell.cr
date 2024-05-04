@@ -6,10 +6,21 @@ class CrystalXlsx::Cell
   property string_index : Int32?
   property row : CrystalXlsx::Row
   property format : CrystalXlsx::Format?
+  property formula : CrystalXlsx::Formula?
 
   def initialize(@value : ValueTypes, @row, @index = 0, @format = nil)
     need_format_of_value
     add_string_to_shared_if_necessary
+  end
+
+  # Set the formula for the cell
+  # @param new_formula [CrystalXlsx::Formula] the formula to set
+  def add_formula(new_formula : CrystalXlsx::Formula)
+    @formula = new_formula
+  end
+
+  def formula=(new_formula : CrystalXlsx::Formula)
+    @formula = new_formula
   end
 
   private def add_string_to_shared_if_necessary
@@ -24,6 +35,9 @@ class CrystalXlsx::Cell
       xml.attribute("r", column_index(row.number))
       xml.attribute("t", type) if type
       xml.attribute("s", @format.try(&.index)) if @format
+      xml.element("f") do
+        xml.text(@formula.to_s)
+      end if @formula
       if shared_strings_enabled?
         shared_string_xml(xml)
       else
@@ -56,6 +70,10 @@ class CrystalXlsx::Cell
     end
   end
 
+  private def get_formula_value
+    @formula.try(&.value(row.worksheet))
+  end
+
   private def shared_strings_enabled? : Bool
     row.worksheet.workbook.try(&.enable_shared_strings?) || false
   end
@@ -79,6 +97,14 @@ class CrystalXlsx::Cell
   end
 
   private def render_value(value) : String
+    if @formula
+      get_formula_value || render_value_without_formula(value)
+    else
+      render_value_without_formula(value)
+    end
+  end
+
+  private def render_value_without_formula(value) : String
     case value
     when Bool then value ? "1" : "0"
     when Time then excel_serial_date(value).to_s
