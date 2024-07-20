@@ -12,105 +12,68 @@ class CrystalXlsx::Worksheet
   end
 
   # Add a row to the worksheet
-  # @param data [Array] The data to add to the row
-  # @param format [Format] The format to apply to the row
-  # @return [Row] The row that was added
-  def add_row(data : CrystalXlsx::Row::ValuesTypes, format : Format? = nil)
+  def add_row(data : CrystalXlsx::Row::ValuesTypes, format : Format? = nil) : Row
     raise "max columns exceeded" if data.size > CrystalXlsx::MAX_COLUMNS
 
     row = Row.new(rows.size + 1, self, format)
     row << data
-
     rows << row
     row
   end
 
   # Add a row to the worksheet - alias for add_row
-  # @param data [Array] The data to add to the row
   def <<(data : CrystalXlsx::Row::ValuesTypes)
     add_row(data)
   end
 
-  # get a row by index
+  # Get a row by index
   def row(index : Int32) : Row
     rows[index]
   end
 
-  # get a cell by row and column
+  # Get a cell by row and column
   def cell(row : Int32, column : Int32) : Cell
-    rows[row].try &.[column] || raise "Cell not found"
+    rows[row][column] || raise "Cell not found"
   end
 
-  # get a cell by sheet index
+  # Get a cell by sheet index
   def cell(index : String) : Cell
-    # split the index into row and column by first letter
-    row, column = index.split(/(?=[A-Z])/)
-
-    cell(row.to_i - 1, column.ord - 'A'.ord)
-  end
-
-  def add_formula(row : Int32, column : Int32, formula : String)
-    cell = cell(row, column)
-    cell.formula = formula
+    row, column = parse_cell_index(index)
+    cell(row, column)
   end
 
   def add_formula(row : Int32, column : Int32, formula : CrystalXlsx::Formula)
-    cell = cell(index)
-    cell.formula = formula.to_s
+    cell(row, column).formula = formula.to_s
   end
 
-  # set the width of a column
-  # @param column [Int] The column to set the width of
-  # @param width [Float | Int] The width to set the column to
+  # Set the width of a column
   def column_width(column : Int32, width : Float64 | Int32)
-    width = width.to_f if width.is_a?(Int32)
-    @cols.add_column_width(column, width)
+    @cols.add_column_width(column, width.to_f)
   end
 
-  # set the width of multiple columns
-  # @param columns [Array] The widths to set the columns to (in order)
-  def columns_width=(columns : Array(Int32))
-    columns.each_with_index do |column, index|
-      column_width(index, column.to_f)
+  # Set the width of multiple columns
+  def columns_width=(columns : Array(Float64 | Int32))
+    columns.each_with_index do |width, index|
+      column_width(index, width.to_f)
     end
   end
 
-  # set the width of multiple columns
-  # @param columns [Array] The widths to set the columns to (in order)
-  def columns_width=(columns : Array(Float64))
-    columns.each_with_index do |column, index|
-      column_width(index, column)
-    end
-  end
-
-  # set pane of the worksheet
-  # @param xSplit [Int] The number of columns to split by
-  # @param ySplit [Int] The number of rows to split by
-  # @param topLeftCell [String] The top left cell of the bottom right pane
-  # @param activePane [String] The active pane
-  # @param state [String] The state of the pane
-  # @return [Sheetview] The sheetview object
+  # Set pane of the worksheet
   def set_pane(xSplit : Int32, ySplit : Int32, topLeftCell : String = "A2", activePane : String = "bottomLeft", state : String = "frozen")
     @sheetviews.add_pane(xSplit, ySplit, topLeftCell, activePane, state)
   end
 
-  # freeze the pane of the worksheet
-  # @param xSplit [Int] The number of columns to split by
-  # @param ySplit [Int] The number of rows to split by
-  # @param topLeftCell [String] The top left cell of the bottom right pane
-  # @return [Sheetview] The sheetview object
+  # Freeze the pane of the worksheet
   def freeze_pane(xSplit : Int32, ySplit : Int32, topLeftCell : String = "A2")
-    set_pane(xSplit, ySplit, topLeftCell)
+    set_pane(xSplit, ySplit, topLeftCell, "bottomLeft", "frozen")
   end
 
-  # freeze the first row of the worksheet
-  # @param row [Int] The row to freeze
-  # @return [Sheetview] The sheetview object
+  # Freeze the first row of the worksheet
   def freeze_row(row : Int32)
     freeze_pane(0, row, "A#{row + 1}")
   end
 
-  # generate the xml for the worksheet
+  # Generate the XML for the worksheet
   def to_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("worksheet", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships", "xmlns:mc": "http://schemas.openxmlformats.org/markup-compatibility/2006", "xmlns:x14ac": "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac", "mc:Ignorable": "x14ac", "xmlns:xr": "http://schemas.microsoft.com/office/spreadsheetml/2014/revision", "xr:uid": "00000000-0001-0000-0000-000000000000", "xmlns:xr2": "http://schemas.microsoft.com/office/spreadsheetml/2015/revision2") do
@@ -127,14 +90,12 @@ class CrystalXlsx::Worksheet
   end
 
   private def reference
-    String.build do |str|
-      str << "A1:"
-      str << ('A'.ord + longest_row.size - 1).chr
-      str << rows.size
-    end
+    longest_row = rows.max_by(&.size) || return "A1"
+    "A1:#{('A'.ord + longest_row.size - 1).chr}#{rows.size}"
   end
 
-  private def longest_row
-    rows.max_by(&.size)
+  private def parse_cell_index(index : String) : {Int32, Int32}
+    row, column = index.split(/(?=[A-Z])/)
+    {row.to_i - 1, column.ord - 'A'.ord}
   end
 end

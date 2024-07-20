@@ -1,5 +1,15 @@
 class CrystalXlsx::Row
-  alias ValuesTypes = Array(Bool | Int32 | String | Time) | Array(Bool | Float32 | Int32 | String | Time) | Array(Float32 | Int32 | String | Time) | Array(String | Time | Int32 | Float64 | Bool) | Array(Float32 | Time | Int32 | String) | Array(Int32 | String) | Array(String) | Array(Int32) | Array(Float64) | Array(Bool)
+  alias ValuesTypes = Array(Bool | Int32 | String | Time) |
+                      Array(Bool | Float32 | Int32 | String | Time) |
+                      Array(Float32 | Int32 | String | Time) |
+                      Array(String | Time | Int32 | Float64 | Bool) |
+                      Array(Float32 | Time | Int32 | String) |
+                      Array(Int32 | String) |
+                      Array(String) |
+                      Array(Int32) |
+                      Array(Float64) |
+                      Array(Bool)
+
   property number : Int32
   property cells : Array(Cell) = [] of Cell
   property format : CrystalXlsx::Format | Nil
@@ -13,8 +23,12 @@ class CrystalXlsx::Row
 
   def add(values : ValuesTypes)
     values.each_with_index do |value, index|
-      cell = Cell.new(value, self, index, @format)
-      @cells << cell
+      if index < @cells.size
+        @cells[index].value = value
+        @cells[index].format = @format
+      else
+        @cells << Cell.new(value, self, index, @format)
+      end
     end
   end
 

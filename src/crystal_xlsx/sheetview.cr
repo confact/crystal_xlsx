@@ -7,13 +7,13 @@ class CrystalXlsx::Sheetview
   end
 
   # Add a pane to the sheetview
-  # @param xsplit [Integer] The number of columns in the top pane
-  # @param ysplit [Integer] The number of rows in the left pane
+  # @param xsplit [Int32] The number of columns in the top pane
+  # @param ysplit [Int32] The number of rows in the left pane
   # @param top_left_cell [String] The cell in the top left of the bottom right pane
   # @param active_pane [String] The pane that is active
   # @param state [String] The state of the pane
   # @return [void]
-  def add_pane(xsplit, ysplit, top_left_cell, active_pane, state)
+  def add_pane(xsplit : Int32, ysplit : Int32, top_left_cell : String, active_pane : String, state : String)
     @pane = CrystalXlsx::Pane.new(xsplit, ysplit, top_left_cell, active_pane, state)
   end
 
@@ -23,7 +23,7 @@ class CrystalXlsx::Sheetview
       xml.element("sheetView") do
         xml.attribute("tabSelected", @tab_selected ? 1 : 0)
         xml.attribute("workbookViewId", @workbook_view_id)
-        @pane.try(&.to_xml(xml))
+        pane.try(&.to_xml(xml))
       end
     end
   end

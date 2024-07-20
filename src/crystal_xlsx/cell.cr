@@ -26,7 +26,11 @@ class CrystalXlsx::Cell
   private def add_string_to_shared_if_necessary
     return unless value.is_a?(String) && shared_strings_enabled?
 
-    @string_index = row.worksheet.workbook.try(&.shared_strings.add(@value.to_s)) || 0
+    @string_index ||= begin
+      if shared_strings_enabled?
+        row.worksheet.workbook.try(&.shared_strings.add(@value.to_s)) || 0
+      end
+    end
   end
 
   def to_xml(xml)
@@ -48,11 +52,7 @@ class CrystalXlsx::Cell
 
   private def shared_string_xml(xml)
     xml.element("v") do
-      if value.is_a?(String)
-        xml.text(@string_index.to_s)
-      else
-        xml.text(render_value(@value))
-      end
+      xml.text(render_value(@value))
     end
   end
 
@@ -75,13 +75,12 @@ class CrystalXlsx::Cell
   end
 
   private def shared_strings_enabled? : Bool
-    row.worksheet.workbook.try(&.enable_shared_strings?) || false
+    @shared_strings_enabled ||= row.worksheet.workbook.try(&.enable_shared_strings?) || false
   end
 
   private def cell_type_char
-    case value
-    when String
-      shared_strings_enabled? ? 's' : "inlineStr"
+    @cell_type_char ||= case value
+    when String then shared_strings_enabled? ? 's' : "inlineStr"
     when Int32, Int64, Float32, Float64 then 'n'
     when Time                           then nil # XML does not require type attribute for dates.
     when Bool                           then 'b'
@@ -90,7 +89,7 @@ class CrystalXlsx::Cell
   end
 
   private def column_index(row_index : Int32)
-    String.build do |str|
+    @column_index ||= String.build do |str|
       str << ('A'.ord + index).chr
       str << row_index
     end
@@ -130,6 +129,6 @@ class CrystalXlsx::Cell
   end
 
   private def excel_serial_date(date : Time)
-    (date.to_unix_f - EPOCH) / DAY_IN_SECONDS
+    @excel_serial_date ||= (date.to_unix_f - EPOCH) / DAY_IN_SECONDS
   end
 end

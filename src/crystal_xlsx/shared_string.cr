@@ -6,26 +6,24 @@ class CrystalXlsx::SharedStrings
 
   def add(string : String) : Int32
     unless string_set.includes?(string)
-      @strings << string
-      @string_indices[string] = strings.size - 1
-      @string_set << string
+      string_indices[string] = strings.size
+      strings << string
+      string_set << string
     end
     @count += 1
-    index(string)
+    string_indices[string]
   end
 
-  def add_data(new_strings)
-    new_strings.each do |string|
-      add(string) if string.is_a?(String)
-    end
+  def add_data(new_strings : Array(String))
+    new_strings.each { |string| add(string) }
   end
 
   def index(string : String) : Int32
-    @string_indices[string]? || raise("String not found: #{string}")
+    string_indices[string]? || raise("String not found: #{string}")
   end
 
   def size
-    @strings.size
+    strings.size
   end
 
   def to_xml(io : IO)
@@ -33,9 +31,7 @@ class CrystalXlsx::SharedStrings
       xml.element("sst", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main", count: count, uniqueCount: size) do
         strings.each do |string|
           xml.element("si") do
-            xml.element("t") do
-              xml.text(string)
-            end
+            xml.element("t") { xml.text(string) }
           end
         end
       end

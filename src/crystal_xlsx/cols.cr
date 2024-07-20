@@ -2,7 +2,7 @@ class CrystalXlsx::Cols
   property column_widths : Hash(Int32, Float64) = {} of Int32 => Float64
   property? have_column_widths : Bool = false
 
-  def add_column_width(column, width : Float64)
+  def add_column_width(column : Int32, width : Float64)
     @column_widths[column] = width
     @have_column_widths = true
   end
@@ -18,32 +18,28 @@ class CrystalXlsx::Cols
   end
 
   private def width_groups
-    width_groups = [] of {width: Float64, min: Int32, max: Int32}
-    current_width = nil
+    groups = [] of {width: Float64, min: Int32, max: Int32}
+    current_width = 0.0
     start_column = 0
-    column = 0
 
-    @column_widths.each do |index, width|
-      column = index + 1 # Column numbering starts at 1
+    # Ensure the column widths are processed in order
+    sorted_widths = @column_widths.to_a.sort_by(&.first)
+    sorted_widths.each_with_index do |(index, width), i|
+      column = index
 
-      if width == current_width
-        # Continue the current group
-        next
-      else
-        # Finish the current group if there was one
+      if width != current_width
+        # Close the current group and start a new one
         if current_width
-          width_groups << {width: current_width, min: start_column, max: column - 1}
+          groups << {width: current_width, min: start_column, max: column - 1}
         end
-
-        # Start a new group
         current_width = width
         start_column = column
+      elsif i == sorted_widths.size - 1
+        # If last column, close the last group
+        groups << {width: current_width, min: start_column, max: column}
       end
     end
 
-    if current_width
-      width_groups << {width: current_width, min: start_column, max: column}
-    end
-    width_groups
+    groups
   end
 end
