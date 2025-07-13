@@ -29,19 +29,27 @@ module CrystalXlsx
       {% for key, value in attrs %}
         xml.attribute({{key.stringify}}, {{value}})
       {% end %}
-      {{block}}
+      {% if block %}
+        {{block}}
+      {% end %}
     end
   end
 
   # Macro for cell XML generation
-  # macro cell_xml(cell_ref, cell_type, format_index, &block)
-  #   xml.element("c") do
-  #     xml.attribute("r", {{cell_ref}})
-  #     xml.attribute("t", {{cell_type}}) if {{cell_type}}
-  #     xml.attribute("s", {{format_index}}) if {{format_index}}
-  #     {{block}}
-  #   end
-  # end
+  macro cell_xml(cell_ref, cell_type, format_index, &block)
+    xml.element("c") do
+      xml.attribute("r", {{cell_ref}})
+      {% if cell_type %}
+        xml.attribute("t", {{cell_type}})
+      {% end %}
+      {% if format_index %}
+        xml.attribute("s", {{format_index}})
+      {% end %}
+      {% if block %}
+        {{block}}
+      {% end %}
+    end
+  end
 
   # Convenience method to create a workbook
   def self.create(&block)

@@ -73,18 +73,21 @@ class CrystalXlsx::Format
     has_border = border
     has_alignment = horizontal_alignment || vertical_alignment
     
-    CrystalXlsx.xml_element(:xf, 
-      numFmtId: num_form_id, 
-      fontId: font_id, 
-      fillId: has_fill ? font_id : 0, 
-      borderId: has_border ? font_id : 0, 
-      applyFont: "1", 
-      applyFill: has_fill ? 1 : 0, 
-      applyBorder: has_border ? 1 : 0, 
-      applyAlignment: has_alignment ? 1 : 0
-    ) do
+    xml.element("xf") do
+      xml.attribute("numFmtId", num_form_id)
+      xml.attribute("fontId", font_id)
+      xml.attribute("fillId", has_fill ? font_id : 0)
+      xml.attribute("borderId", has_border ? font_id : 0)
+      xml.attribute("applyFont", "1")
+      xml.attribute("applyFill", has_fill ? 1 : 0)
+      xml.attribute("applyBorder", has_border ? 1 : 0)
+      xml.attribute("applyAlignment", has_alignment ? 1 : 0)
+      
       if has_alignment
-        CrystalXlsx.xml_element(:alignment, horizontal: horizontal_alignment, vertical: vertical_alignment)
+        xml.element("alignment") do
+          xml.attribute("horizontal", horizontal_alignment) if horizontal_alignment
+          xml.attribute("vertical", vertical_alignment) if vertical_alignment
+        end
       end
     end
   end

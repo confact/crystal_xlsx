@@ -12,6 +12,12 @@ class CrystalXlsx::Cell
   property format : CrystalXlsx::Format?
   property formula : CrystalXlsx::Formula?
 
+  # Private instance variables with type annotations
+  @cell_type_char : String?
+  @column_index : String?
+  @shared_strings_enabled : Bool?
+  @excel_serial_date : Float64?
+
   def initialize(@value : ValueTypes, @row, @index = 0, @format = nil)
     need_format_of_value
     add_string_to_shared_if_necessary
@@ -37,7 +43,11 @@ class CrystalXlsx::Cell
     type = cell_type_char
     format_index = @format.try(&.index)
     
-    CrystalXlsx.cell_xml(column_index(row.number), type, format_index) do
+    xml.element("c") do
+      xml.attribute("r", column_index(row.number))
+      xml.attribute("t", type) if type
+      xml.attribute("s", format_index) if format_index
+      
       if @formula
         xml.element("f") do
           # Write the formula as a string (e.g., SUM(A1:A10))
