@@ -5,6 +5,7 @@ class CrystalXlsx::Worksheet
   @cols : CrystalXlsx::Cols = CrystalXlsx::Cols.new
   @sheetviews : CrystalXlsx::Sheetview = CrystalXlsx::Sheetview.new
   @hyperlinks : Array(Hyperlink) = [] of Hyperlink
+  @merged_cells : Array(String) = [] of String
 
   def initialize(name : String, workbook : CrystalXlsx::Workbook? = nil)
     @name = name
@@ -72,6 +73,20 @@ class CrystalXlsx::Worksheet
     @hyperlinks << hyperlink
   end
 
+  # Add a merged cell range (e.g., "A1:B2")
+  def merge_cells(range : String)
+    @merged_cells << range
+  end
+
+  # Add a merged cell range by from/to (e.g., from: "A1", to: "B2")
+  def merge_cells(from : String, to : String)
+    @merged_cells << "#{from}:#{to}"
+  end
+
+  def merged_cells : Array(String)
+    @merged_cells
+  end
+
   # Set the width of a column
   def column_width(column : Int32, width : Float64 | Int32)
     @cols.add_column_width(column, width.to_f)
@@ -109,6 +124,14 @@ class CrystalXlsx::Worksheet
         @cols.to_xml(xml)
         xml.element("sheetData") do
           rows.each(&.to_xml(xml))
+        end
+        # Add merged cells if any
+        if @merged_cells.size > 0
+          xml.element("mergeCells", count: @merged_cells.size) do
+            @merged_cells.each do |range|
+              xml.element("mergeCell", ref: range)
+            end
+          end
         end
         # Add hyperlinks if any exist
         if @hyperlinks.size > 0
