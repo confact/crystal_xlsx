@@ -28,8 +28,8 @@ class CrystalXlsx::Style
       str << format.font_size
       str << format.text_color
       str << format.bg_color
-      str << format.bold?
-      str << format.border?
+      str << format.bold
+      str << format.border
       str << format.num_form_id
       str << format.horizontal_alignment
       str << format.vertical_alignment

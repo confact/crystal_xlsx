@@ -130,7 +130,7 @@ class CrystalXlsx::Cell
     new_format = @format.try(&.merge(num_form_id: number_format_id)) || CrystalXlsx::Format.new(num_form_id: number_format_id)
 
     # add to all formats
-    @format = row.worksheet.workbook.try(&.add_format(new_format))
+    @format = row.worksheet.workbook.try(&.style(new_format))
   end
 
   private def number_format_id : Int32

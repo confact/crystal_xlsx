@@ -33,19 +33,19 @@ module CrystalXlsx
 
   # Macro for XML element with attributes
   macro xml_element(name, **attrs, &block)
-    xml.element({{name}}) do
+    xml.element({{name.id.stringify}}) do
       {% for key, value in attrs %}
-        xml.attribute({{key}}, {{value}})
+        xml.attribute({{key.stringify}}, {{value}})
       {% end %}
-      {{block.body}}
+      {{block}}
     end
   end
 
   # Macro for simple XML element with attributes
   macro xml_element_simple(name, **attrs)
-    xml.element({{name}}) do
+    xml.element({{name.id.stringify}}) do
       {% for key, value in attrs %}
-        xml.attribute({{key}}, {{value}})
+        xml.attribute({{key.stringify}}, {{value}})
       {% end %}
     end
   end
@@ -56,7 +56,7 @@ module CrystalXlsx
       xml.attribute("r", {{cell_ref}})
       xml.attribute("t", {{cell_type}}) if {{cell_type}}
       xml.attribute("s", {{format_index}}) if {{format_index}}
-      {{block.body}}
+      {{block}}
     end
   end
 
