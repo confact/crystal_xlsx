@@ -42,10 +42,10 @@ class CrystalXlsx::Cell
       if @formula
         xml.element("f") do
           # Write the formula as a string (e.g., SUM(A1:A10))
-          if @formula.responds_to?(:excel_formula)
-            xml.text(@formula.excel_formula)
+          if @formula.try(&.responds_to?(:excel_formula))
+            xml.text(@formula.try(&.excel_formula) || "")
           else
-            xml.text(@formula.to_s)
+            xml.text(@formula.try(&.to_s) || "")
           end
         end
         # Optionally, you can add a cached value here with <v> if needed

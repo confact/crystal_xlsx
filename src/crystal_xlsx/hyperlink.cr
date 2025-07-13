@@ -28,7 +28,7 @@ class CrystalXlsx::Hyperlink
       # External URL link
       xml.element("hyperlink", ref: cell_ref, "r:id": "rId#{relationship_id}") do
         xml.element("display") do
-          xml.text(display_text || url)
+          xml.text(display_text || url || "")
         end
       end
     end
