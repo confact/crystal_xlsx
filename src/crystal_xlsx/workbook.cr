@@ -1,124 +1,135 @@
 require "compress/zip"
 
 class CrystalXlsx::Workbook
-  property worksheets : Array(CrystalXlsx::Worksheet) = [] of CrystalXlsx::Worksheet
-  property shared_strings : CrystalXlsx::SharedStrings = SharedStrings.new
-  property theme : CrystalXlsx::Theme = CrystalXlsx::Theme.new
-  property style : CrystalXlsx::Style = CrystalXlsx::Style.new
-  property? enable_shared_strings : Bool = true
-  property workbook_rels : CrystalXlsx::Rels = CrystalXlsx::Rels.new
-  property rels : CrystalXlsx::Rels = CrystalXlsx::Rels.new
+  # Properties
+  getter worksheets = [] of Worksheet
+  getter shared_strings = SharedStrings.new
+  getter theme = Theme.new
+  getter style = Style.new
+  getter workbook_rels = Rels.new
+  getter rels = Rels.new
+  
+  # Configuration
+  property? enable_shared_strings = true
 
-  # Add a worksheet to the workbook
-  # @param name [String] The name of the worksheet
-  # @return [CrystalXlsx::Worksheet] The worksheet object
-  def add_worksheet(name)
-    worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
+  # Create a new worksheet
+  def sheet(name : String, &block)
+    worksheet = Worksheet.new(name, self)
+    @worksheets << worksheet
+    yield worksheet
+    worksheet
+  end
+
+  # Create a new worksheet without a block
+  def sheet(name : String) : Worksheet
+    worksheet = Worksheet.new(name, self)
     @worksheets << worksheet
     worksheet
   end
 
-  # Add a worksheet to the workbook
-  # @param name [String] The name of the worksheet
-  # @yieldparam worksheet [CrystalXlsx::Worksheet] The worksheet object
-  def add_worksheet(name, &)
-    worksheet = CrystalXlsx::Worksheet.new(name, workbook: self)
-    @worksheets << worksheet
-    yield worksheet
-  end
-
-  # Add a style format to the workbook
-  # @param options [Hash] The options for the format
-  # @return [CrystalXlsx::Format] The format object
-  def add_format(**options)
+  # Add a style format
+  def style(**options) : Format
     style.add_format(**options)
   end
 
-  # Add a style format to the workbook
-  # @param format [CrystalXlsx::Format] The format object
-  # @return [CrystalXlsx::Format] The format object
-  def add_format(format : CrystalXlsx::Format)
+  # Add a style format from existing format
+  def style(format : Format) : Format
     style.add_format(format)
   end
 
-  # close the workbook and write it to a file
-  # @param filepath [String] The path to the file
-  # @return void
-  def close(filepath = "./temp.xlsx")
-    File.open(filepath, "w") do |file|
-      to_io(file)
+  # Save workbook to file
+  def save(filename : String)
+    File.open(filename, "w") do |file|
+      write_to(file)
     end
   end
 
-  # alias for close
-  def save(filepath = "./temp.xlsx")
-    close(filepath)
-  end
-
-  def read : IO
-    stream = IO::Memory.new
-    to_io(stream)
-    stream.rewind
-    stream
-  end
-
-  def to_s : String
-    read.to_s
-  end
-
-  def to_io(io)
+  # Write workbook to IO
+  def write_to(io : IO)
     Compress::Zip::Writer.open(io) do |zip|
       build_zip_contents(zip)
     end
   end
 
+  # Get workbook as string
+  def to_s : String
+    io = IO::Memory.new
+    write_to(io)
+    io.to_s
+  end
+
+  # Get workbook as IO
+  def to_io : IO
+    stream = IO::Memory.new
+    write_to(stream)
+    stream.rewind
+    stream
+  end
+
+  # Legacy methods for backward compatibility
+  def add_worksheet(name, &block)
+    sheet(name, &block)
+  end
+
+  def add_worksheet(name)
+    sheet(name)
+  end
+
+  def add_format(**options)
+    style(**options)
+  end
+
+  def add_format(format : Format)
+    style(format)
+  end
+
+  def close(filename = "./temp.xlsx")
+    save(filename)
+  end
+
   private def build_zip_contents(zip)
-    zip.add("[Content_Types].xml") do |io|
-      generate_content_type_xml(io)
-    end
-    zip.add("docProps/app.xml") do |io|
-      CrystalXlsx::DocPropsApp.to_xml(worksheets, io)
-    end
-    zip.add("docProps/core.xml") do |io|
-      CrystalXlsx::DocPropsCore.to_xml(io)
-    end
-    zip.add("xl/workbook.xml") do |io|
-      create_workbook_xml(io)
-    end
-    zip.add("xl/styles.xml") do |io|
-      style.to_xml(io)
-    end
-    zip.add("xl/theme/theme1.xml") do |io|
-      theme.to_xml(io)
-    end
-    zip.add("_rels/.rels") do |io|
-      generate_root_rels_xml(io)
-    end
-    zip.add("xl/_rels/workbook.xml.rels") do |io|
-      generate_workbook_rels_xml(io)
+    # Content types
+    zip.add("[Content_Types].xml") { |io| generate_content_types(io) }
+    
+    # Document properties
+    zip.add("docProps/app.xml") { |io| DocPropsApp.to_xml(worksheets, io) }
+    zip.add("docProps/core.xml") { |io| DocPropsCore.to_xml(io) }
+    
+    # Main workbook
+    zip.add("xl/workbook.xml") { |io| create_workbook_xml(io) }
+    zip.add("xl/styles.xml") { |io| style.to_xml(io) }
+    zip.add("xl/theme/theme1.xml") { |io| theme.to_xml(io) }
+    
+    # Relationships
+    zip.add("_rels/.rels") { |io| generate_root_rels(io) }
+    zip.add("xl/_rels/workbook.xml.rels") { |io| generate_workbook_rels(io) }
+
+    # Shared strings
+    if enable_shared_strings?
+      zip.add("xl/sharedStrings.xml") { |io| shared_strings.to_xml(io) }
     end
 
-    zip.add("xl/sharedStrings.xml") do |io|
-      shared_strings.to_xml(io)
-    end if enable_shared_strings?
-
+    # Worksheets
     worksheets.each_with_index do |worksheet, index|
-      zip.add("xl/worksheets/sheet#{index + 1}.xml") do |io|
-        worksheet.to_xml(io)
-      end
+      sheet_num = index + 1
+      zip.add("xl/worksheets/sheet#{sheet_num}.xml") { |io| worksheet.to_xml(io) }
       
-      # Add worksheet relationships if there are hyperlinks
+      # Worksheet relationships (for hyperlinks)
       if worksheet.hyperlinks.size > 0
-        zip.add("xl/worksheets/_rels/sheet#{index + 1}.xml.rels") do |io|
-          generate_worksheet_rels_xml(index, io)
-        end
+        zip.add("xl/worksheets/_rels/sheet#{sheet_num}.xml.rels") { |io| generate_worksheet_rels(index, io) }
       end
     end
   end
 
   private def create_workbook_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
-      xml.element("workbook", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships", "xmlns:mc": "http://schemas.openxmlformats.org/markup-compatibility/2006", "mc:Ignorable": "x15", "xmlns:x15": "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main") do
+      xml.element("workbook", 
+        xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+        "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        "xmlns:mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
+        "mc:Ignorable": "x15",
+        "xmlns:x15": "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main"
+      ) do
         xml.element("fileVersion", appName: "xl", lastEdited: "4", lowestEdited: "4", rupBuild: "9302")
         xml.element("workbookPr", defaultThemeVersion: "202300")
         xml.element("bookViews") do
@@ -134,13 +145,16 @@ class CrystalXlsx::Workbook
     end
   end
 
-  private def generate_content_type_xml(io)
+  private def generate_content_types(io)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("Types", xmlns: "http://schemas.openxmlformats.org/package/2006/content-types") do
+        # Defaults
         xml.element("Default", "Extension": "rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml")
         xml.element("Default", "Extension": "xml", "ContentType": "application/xml")
+        
+        # Overrides
         xml.element("Override", "PartName": "/xl/workbook.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")
-
+        
         worksheets.each_with_index do |_, index|
           xml.element("Override", "PartName": "/xl/worksheets/sheet#{index + 1}.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")
         end
@@ -151,7 +165,7 @@ class CrystalXlsx::Workbook
         xml.element("Override", "PartName": "/docProps/core.xml", "ContentType": "application/vnd.openxmlformats-package.core-properties+xml")
         xml.element("Override", "PartName": "/docProps/app.xml", "ContentType": "application/vnd.openxmlformats-officedocument.extended-properties+xml")
         
-        # Add hyperlink content types
+        # Hyperlink content types
         worksheets.each_with_index do |worksheet, index|
           if worksheet.hyperlinks.size > 0
             xml.element("Override", "PartName": "/xl/worksheets/_rels/sheet#{index + 1}.xml.rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml")
@@ -161,30 +175,27 @@ class CrystalXlsx::Workbook
     end
   end
 
-  private def generate_root_rels_xml(io : IO)
+  private def generate_root_rels(io : IO)
     rels << {id: "rId1", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument", target: "xl/workbook.xml"}
     rels << {id: "rId2", type: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties", target: "docProps/core.xml"}
     rels << {id: "rId3", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties", target: "docProps/app.xml"}
-
     rels.to_xml(io)
   end
 
-  private def generate_workbook_rels_xml(io : IO)
+  private def generate_workbook_rels(io : IO)
     worksheets.each_with_index do |_, index|
       workbook_rels << {id: "rId#{index + 1}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", target: "worksheets/sheet#{index + 1}.xml"}
     end
     workbook_rels << {id: "rId#{worksheets.size + 1}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", target: "sharedStrings.xml"} if enable_shared_strings?
     workbook_rels << {id: "rId#{worksheets.size + 2}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", target: "styles.xml"}
     workbook_rels << {id: "rId#{worksheets.size + 3}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme", target: "theme/theme1.xml"}
-
     workbook_rels.to_xml(io)
   end
 
-  private def generate_worksheet_rels_xml(worksheet_index : Int32, io : IO)
+  private def generate_worksheet_rels(worksheet_index : Int32, io : IO)
     worksheet = worksheets[worksheet_index]
-    worksheet_rels = CrystalXlsx::Rels.new
+    worksheet_rels = Rels.new
     
-    # Add hyperlink relationships
     worksheet.hyperlinks.each_with_index do |hyperlink, index|
       rel_id = index + 1
       worksheet_rels << {
