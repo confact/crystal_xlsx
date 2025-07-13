@@ -30,5 +30,15 @@ describe CrystalXlsx::Cols do
       end
       xml.should match(/<cols><col min="0" max="0" width="10.0" customWidth="1"\/><col min="1" max="1" width="20.0" customWidth="1"\/><\/cols>/)
     end
+
+    it "should group columns with same width" do
+      cols = CrystalXlsx::Cols.new
+      cols.add_column_width(0, 10)
+      cols.add_column_width(1, 10)
+      xml = XML.build_fragment do |xml|
+        cols.to_xml(xml)
+      end
+      xml.should match(/<cols><col min="0" max="1" width="10.0" customWidth="1"\/><\/cols>/)
+    end
   end
 end
