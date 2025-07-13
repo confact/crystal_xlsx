@@ -104,4 +104,13 @@ class CrystalXlsx::Format
   def font_id
     index
   end
+
+  # Boolean property accessors
+  def bold? : Bool
+    bold
+  end
+
+  def border? : Bool
+    border
+  end
 end

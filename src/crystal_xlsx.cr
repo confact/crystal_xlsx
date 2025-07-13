@@ -1,6 +1,22 @@
 require "xml"
 require "./crystal_xlsx/formula/*"
-require "./crystal_xlsx/*"
+
+# Load files in dependency order to avoid circular dependencies
+require "./crystal_xlsx/format.cr"
+require "./crystal_xlsx/row.cr"
+require "./crystal_xlsx/cell.cr"
+require "./crystal_xlsx/worksheet.cr"
+require "./crystal_xlsx/workbook.cr"
+require "./crystal_xlsx/style.cr"
+require "./crystal_xlsx/theme.cr"
+require "./crystal_xlsx/shared_string.cr"
+require "./crystal_xlsx/hyperlink.cr"
+require "./crystal_xlsx/cols.cr"
+require "./crystal_xlsx/sheetview.cr"
+require "./crystal_xlsx/pane.cr"
+require "./crystal_xlsx/rels.cr"
+require "./crystal_xlsx/doc_props_core.cr"
+require "./crystal_xlsx/doc_props_app.cr"
 
 module CrystalXlsx
   VERSION = "0.1.0"
