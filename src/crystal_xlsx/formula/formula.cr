@@ -19,4 +19,8 @@ class CrystalXlsx::StringFormula < CrystalXlsx::Formula
   def excel_formula : String
     formula_str
   end
+  def value(sheet) : String
+    # For string formulas, we don't compute a value - let Excel handle it
+    ""
+  end
 end
