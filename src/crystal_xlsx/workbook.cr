@@ -138,6 +138,7 @@ class CrystalXlsx::Workbook
 
   private def create_workbook_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
+      # CrystalXlsx.workbook_xml do
       xml.element("workbook", 
         xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
         "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
@@ -157,6 +158,7 @@ class CrystalXlsx::Workbook
         end
         xml.element("calcPr", calcId: "0")
       end
+      # end
     end
   end
 

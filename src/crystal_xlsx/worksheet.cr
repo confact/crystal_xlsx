@@ -197,6 +197,7 @@ class CrystalXlsx::Worksheet
   # Generates the XML representation of the worksheet.
   def to_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
+      # CrystalXlsx.worksheet_xml do
       xml.element("worksheet", 
         xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
         "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
@@ -235,6 +236,7 @@ class CrystalXlsx::Worksheet
         
         xml.element("pageMargins", left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3)
       end
+      # end
     end
   end
 

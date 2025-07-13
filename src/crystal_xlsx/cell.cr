@@ -43,11 +43,7 @@ class CrystalXlsx::Cell
     type = cell_type_char
     format_index = @format.try(&.index)
     
-    xml.element("c") do
-      xml.attribute("r", column_index(row.number))
-      xml.attribute("t", type) if type
-      xml.attribute("s", format_index) if format_index
-      
+    CrystalXlsx.cell_xml(column_index(row.number), type, format_index) do
       if @formula
         xml.element("f") do
           # Write the formula as a string (e.g., SUM(A1:A10))

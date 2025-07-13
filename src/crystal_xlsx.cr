@@ -35,6 +35,15 @@ module CrystalXlsx
     end
   end
 
+  # Macro for simple XML element with attributes (no block)
+  macro xml_element_simple(name, **attrs)
+    xml.element({{name.id.stringify}}) do
+      {% for key, value in attrs %}
+        xml.attribute({{key.stringify}}, {{value}})
+      {% end %}
+    end
+  end
+
   # Macro for cell XML generation
   macro cell_xml(cell_ref, cell_type, format_index, &block)
     xml.element("c") do
@@ -48,6 +57,52 @@ module CrystalXlsx
       {% if block %}
         {{block}}
       {% end %}
+    end
+  end
+
+  # Macro for row XML generation
+  macro row_xml(row_number, spans, &block)
+    xml.element("row") do
+      xml.attribute("r", {{row_number}})
+      xml.attribute("spans", {{spans}})
+      xml.attribute("ht", 15)
+      xml.attribute("x14ac:dyDescent", 0.2)
+      {{block}}
+    end
+  end
+
+  # Macro for worksheet XML generation
+  macro worksheet_xml(&block)
+    xml.element("worksheet") do
+      xml.attribute("xmlns", "http://schemas.openxmlformats.org/spreadsheetml/2006/main")
+      xml.attribute("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
+      xml.attribute("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006")
+      xml.attribute("xmlns:x14ac", "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac")
+      xml.attribute("mc:Ignorable", "x14ac")
+      xml.attribute("xmlns:xr", "http://schemas.microsoft.com/office/spreadsheetml/2014/revision")
+      xml.attribute("xr:uid", "00000000-0001-0000-0000-000000000000")
+      xml.attribute("xmlns:xr2", "http://schemas.microsoft.com/office/spreadsheetml/2015/revision2")
+      {{block}}
+    end
+  end
+
+  # Macro for workbook XML generation
+  macro workbook_xml(&block)
+    xml.element("workbook") do
+      xml.attribute("xmlns", "http://schemas.openxmlformats.org/spreadsheetml/2006/main")
+      xml.attribute("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
+      xml.attribute("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006")
+      xml.attribute("mc:Ignorable", "x15")
+      xml.attribute("xmlns:x15", "http://schemas.microsoft.com/office/spreadsheetml/2010/11/main")
+      {{block}}
+    end
+  end
+
+  # Macro for style sheet XML generation
+  macro stylesheet_xml(&block)
+    xml.element("styleSheet") do
+      xml.attribute("xmlns", "http://schemas.openxmlformats.org/spreadsheetml/2006/main")
+      {{block}}
     end
   end
 
@@ -67,7 +122,7 @@ module CrystalXlsx
 end
 
 # Now load the files in dependency order
-require "./crystal_xlsx/format_clean.cr"
+require "./crystal_xlsx/format.cr"
 require "./crystal_xlsx/row.cr"
 require "./crystal_xlsx/cell.cr"
 require "./crystal_xlsx/worksheet.cr"

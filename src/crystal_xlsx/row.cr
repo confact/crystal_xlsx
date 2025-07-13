@@ -60,12 +60,7 @@ class CrystalXlsx::Row
 
   # Generates the XML representation of the row.
   def to_xml(xml)
-    xml.element("row") do
-      xml.attribute("r", @number)
-      xml.attribute("spans", "1:#{size}")
-      xml.attribute("ht", 15)
-      xml.attribute("x14ac:dyDescent", 0.2)
-      
+    CrystalXlsx.row_xml(@number, "1:#{size}") do
       @cells.each do |cell|
         cell.to_xml(xml)
       end

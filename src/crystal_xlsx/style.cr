@@ -38,6 +38,7 @@ class CrystalXlsx::Style
 
   def to_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
+      # CrystalXlsx.stylesheet_xml do
       xml.element("styleSheet", xmlns: "http://schemas.openxmlformats.org/spreadsheetml/2006/main") do
         # Fonts
         xml.element("fonts", count: formats.size + 1) do
@@ -107,6 +108,7 @@ class CrystalXlsx::Style
           end
         end
       end
+      # end
     end
   end
 end
