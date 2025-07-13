@@ -4,11 +4,17 @@ class CrystalXlsx::Worksheet
   property workbook : CrystalXlsx::Workbook?
   @cols : CrystalXlsx::Cols = CrystalXlsx::Cols.new
   @sheetviews : CrystalXlsx::Sheetview = CrystalXlsx::Sheetview.new
+  @hyperlinks : Array(Hyperlink) = [] of Hyperlink
 
   def initialize(name : String, workbook : CrystalXlsx::Workbook? = nil)
     @name = name
     @workbook = workbook
     @rows = [] of Row
+  end
+
+  # Get hyperlinks
+  def hyperlinks : Array(Hyperlink)
+    @hyperlinks
   end
 
   # Add a row to the worksheet
@@ -44,6 +50,26 @@ class CrystalXlsx::Worksheet
 
   def add_formula(row : Int32, column : Int32, formula : CrystalXlsx::Formula)
     cell(row, column).formula = formula.to_s
+  end
+
+  # Add a hyperlink to a cell
+  def add_hyperlink(row : Int32, column : Int32, url : String, display_text : String? = nil)
+    cell_ref = "#{('A'.ord + column).chr}#{row + 1}"
+    hyperlink = Hyperlink.new(cell_ref, url, display_text)
+    @hyperlinks << hyperlink
+  end
+
+  # Add a hyperlink to a cell by cell reference (e.g., "A1")
+  def add_hyperlink(cell_ref : String, url : String, display_text : String? = nil)
+    hyperlink = Hyperlink.new(cell_ref, url, display_text)
+    @hyperlinks << hyperlink
+  end
+
+  # Add a hyperlink to another worksheet cell
+  def add_worksheet_hyperlink(row : Int32, column : Int32, target_worksheet : CrystalXlsx::Worksheet, target_cell : String, display_text : String? = nil)
+    cell_ref = "#{('A'.ord + column).chr}#{row + 1}"
+    hyperlink = Hyperlink.new_worksheet_link(cell_ref, target_worksheet, target_cell, display_text)
+    @hyperlinks << hyperlink
   end
 
   # Set the width of a column
@@ -83,6 +109,14 @@ class CrystalXlsx::Worksheet
         @cols.to_xml(xml)
         xml.element("sheetData") do
           rows.each(&.to_xml(xml))
+        end
+        # Add hyperlinks if any exist
+        if @hyperlinks.size > 0
+          xml.element("hyperlinks") do
+            @hyperlinks.each_with_index do |hyperlink, index|
+              hyperlink.to_xml(xml, index + 1)
+            end
+          end
         end
         xml.element("pageMargins", left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3)
       end

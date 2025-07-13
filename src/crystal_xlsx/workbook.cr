@@ -106,6 +106,13 @@ class CrystalXlsx::Workbook
       zip.add("xl/worksheets/sheet#{index + 1}.xml") do |io|
         worksheet.to_xml(io)
       end
+      
+      # Add worksheet relationships if there are hyperlinks
+      if worksheet.hyperlinks.size > 0
+        zip.add("xl/worksheets/_rels/sheet#{index + 1}.xml.rels") do |io|
+          generate_worksheet_rels_xml(index, io)
+        end
+      end
     end
   end
 
@@ -143,6 +150,13 @@ class CrystalXlsx::Workbook
         xml.element("Override", "PartName": "/xl/sharedStrings.xml", "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml") if enable_shared_strings?
         xml.element("Override", "PartName": "/docProps/core.xml", "ContentType": "application/vnd.openxmlformats-package.core-properties+xml")
         xml.element("Override", "PartName": "/docProps/app.xml", "ContentType": "application/vnd.openxmlformats-officedocument.extended-properties+xml")
+        
+        # Add hyperlink content types
+        worksheets.each_with_index do |worksheet, index|
+          if worksheet.hyperlinks.size > 0
+            xml.element("Override", "PartName": "/xl/worksheets/_rels/sheet#{index + 1}.xml.rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml")
+          end
+        end
       end
     end
   end
@@ -164,5 +178,22 @@ class CrystalXlsx::Workbook
     workbook_rels << {id: "rId#{worksheets.size + 3}", type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme", target: "theme/theme1.xml"}
 
     workbook_rels.to_xml(io)
+  end
+
+  private def generate_worksheet_rels_xml(worksheet_index : Int32, io : IO)
+    worksheet = worksheets[worksheet_index]
+    worksheet_rels = CrystalXlsx::Rels.new
+    
+    # Add hyperlink relationships
+    worksheet.hyperlinks.each_with_index do |hyperlink, index|
+      rel_id = index + 1
+      worksheet_rels << {
+        id: "rId#{rel_id}",
+        type: hyperlink.relationship_type,
+        target: hyperlink.relationship_target
+      }
+    end
+    
+    worksheet_rels.to_xml(io)
   end
 end
