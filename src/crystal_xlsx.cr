@@ -1,22 +1,6 @@
 require "xml"
 
-# Load files in dependency order to avoid circular dependencies
-require "./crystal_xlsx/format.cr"
-require "./crystal_xlsx/row.cr"
-require "./crystal_xlsx/cell.cr"
-require "./crystal_xlsx/worksheet.cr"
-require "./crystal_xlsx/workbook.cr"
-require "./crystal_xlsx/style.cr"
-require "./crystal_xlsx/theme.cr"
-require "./crystal_xlsx/shared_string.cr"
-require "./crystal_xlsx/hyperlink.cr"
-require "./crystal_xlsx/cols.cr"
-require "./crystal_xlsx/sheetview.cr"
-require "./crystal_xlsx/pane.cr"
-require "./crystal_xlsx/rels.cr"
-require "./crystal_xlsx/doc_props_core.cr"
-require "./crystal_xlsx/doc_props_app.cr"
-
+# Define the module and macros first
 module CrystalXlsx
   VERSION = "0.1.0"
 
@@ -74,5 +58,24 @@ module CrystalXlsx
   end
 end
 
-# Load formula files after the module is defined
-require "./crystal_xlsx/formula/*"
+# Now load the files in dependency order
+require "./crystal_xlsx/format_clean.cr"
+require "./crystal_xlsx/row.cr"
+require "./crystal_xlsx/cell.cr"
+require "./crystal_xlsx/worksheet.cr"
+require "./crystal_xlsx/workbook.cr"
+require "./crystal_xlsx/style.cr"
+require "./crystal_xlsx/theme.cr"
+require "./crystal_xlsx/shared_string.cr"
+require "./crystal_xlsx/hyperlink.cr"
+require "./crystal_xlsx/cols.cr"
+require "./crystal_xlsx/sheetview.cr"
+require "./crystal_xlsx/pane.cr"
+require "./crystal_xlsx/rels.cr"
+require "./crystal_xlsx/doc_props_core.cr"
+require "./crystal_xlsx/doc_props_app.cr"
+
+# Load formula files last
+require "./crystal_xlsx/formula/formula.cr"
+require "./crystal_xlsx/formula/link.cr"
+require "./crystal_xlsx/formula/sum.cr"
