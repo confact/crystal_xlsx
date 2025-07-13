@@ -1,8 +1,9 @@
 require "../src/crystal_xlsx"
 
 # Create a workbook with the new API
-CrystalXlsx.create("example.xlsx") do |workbook|
+CrystalXlsx.create("example.xlsx") do
   # Create a worksheet with a block
+  workbook = CrystalXlsx::Workbook.new
   workbook.sheet("Sales Data") do |sheet|
     # Add data
     sheet.add(["Product", "Q1", "Q2", "Q3", "Q4"])
