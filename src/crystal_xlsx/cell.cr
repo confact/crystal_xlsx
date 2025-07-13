@@ -39,15 +39,30 @@ class CrystalXlsx::Cell
       xml.attribute("r", column_index(row.number))
       xml.attribute("t", type) if type
       xml.attribute("s", @format.try(&.index)) if @format
-      xml.element("f") do
-        xml.text(@formula.to_s)
-      end if @formula
-      if shared_strings_enabled?
-        shared_string_xml(xml)
-      else
-        non_shared_string_xml(xml)
+      if @formula
+        xml.element("f") do
+          # Write the formula as a string (e.g., SUM(A1:A10))
+          if @formula.responds_to?(:excel_formula)
+            xml.text(@formula.excel_formula)
+          else
+            xml.text(@formula.to_s)
+          end
+        end
+        # Optionally, you can add a cached value here with <v> if needed
+      end
+      unless @formula
+        if shared_strings_enabled?
+          shared_string_xml(xml)
+        else
+          non_shared_string_xml(xml)
+        end
       end
     end
+  end
+
+  # Convenience method to set a formula as a string
+  def set_formula_string(formula_str : String)
+    @formula = CrystalXlsx::StringFormula.new(formula_str)
   end
 
   private def shared_string_xml(xml)
