@@ -1,6 +1,10 @@
+# Represents a cell in an Excel worksheet.
+# 
+# Supports various data types: String, Int32, Int64, Float32, Float64, Bool, Time
 class CrystalXlsx::Cell
   alias ValueTypes = String | Int32 | Int64 | Float32 | Float64 | Bool | Time
 
+  # Properties
   property value : ValueTypes
   property index : Int32 = 0
   property string_index : Int32?
@@ -13,32 +17,27 @@ class CrystalXlsx::Cell
     add_string_to_shared_if_necessary
   end
 
-  # Set the formula for the cell
-  # @param new_formula [CrystalXlsx::Formula] the formula to set
+  # Sets a formula for this cell.
   def add_formula(new_formula : CrystalXlsx::Formula)
     @formula = new_formula
   end
 
+  # Sets a formula for this cell (alias).
   def formula=(new_formula : CrystalXlsx::Formula)
     @formula = new_formula
   end
 
-  private def add_string_to_shared_if_necessary
-    return unless value.is_a?(String) && shared_strings_enabled?
-
-    @string_index ||= begin
-      if shared_strings_enabled?
-        row.worksheet.workbook.try(&.shared_strings.add(@value.to_s)) || 0
-      end
-    end
+  # Sets a formula string for this cell.
+  def set_formula_string(formula_str : String)
+    @formula = CrystalXlsx::StringFormula.new(formula_str)
   end
 
+  # Generates the XML representation of the cell.
   def to_xml(xml)
     type = cell_type_char
-    xml.element("c") do
-      xml.attribute("r", column_index(row.number))
-      xml.attribute("t", type) if type
-      xml.attribute("s", @format.try(&.index)) if @format
+    format_index = @format.try(&.index)
+    
+    CrystalXlsx.cell_xml(column_index(row.number), type, format_index) do
       if @formula
         xml.element("f") do
           # Write the formula as a string (e.g., SUM(A1:A10))
@@ -60,9 +59,14 @@ class CrystalXlsx::Cell
     end
   end
 
-  # Convenience method to set a formula as a string
-  def set_formula_string(formula_str : String)
-    @formula = CrystalXlsx::StringFormula.new(formula_str)
+  private def add_string_to_shared_if_necessary
+    return unless value.is_a?(String) && shared_strings_enabled?
+
+    @string_index ||= begin
+      if shared_strings_enabled?
+        row.worksheet.workbook.try(&.shared_strings.add(@value.to_s)) || 0
+      end
+    end
   end
 
   private def shared_string_xml(xml)
@@ -94,13 +98,7 @@ class CrystalXlsx::Cell
   end
 
   private def cell_type_char
-    @cell_type_char ||= case value
-    when String then shared_strings_enabled? ? 's' : "inlineStr"
-    when Int32, Int64, Float32, Float64 then 'n'
-    when Time                           then nil # XML does not require type attribute for dates.
-    when Bool                           then 'b'
-    else                                     nil
-    end
+    @cell_type_char ||= CrystalXlsx.cell_type_for(value.class)
   end
 
   private def column_index(row_index : Int32)
@@ -131,7 +129,7 @@ class CrystalXlsx::Cell
 
     new_format = @format.try(&.merge(num_form_id: number_format_id)) || CrystalXlsx::Format.new(num_form_id: number_format_id)
 
-    # add  to all formats
+    # add to all formats
     @format = row.worksheet.workbook.try(&.add_format(new_format))
   end
 

@@ -1,4 +1,17 @@
+# Represents cell formatting in Excel.
+# 
+# Example:
+# ```
+# format = Format.new(
+#   font_size: 12,
+#   bold: true,
+#   text_color: "FF0000",
+#   bg_color: "FFFF00",
+#   horizontal_alignment: "center"
+# )
+# ```
 class CrystalXlsx::Format
+  # Properties
   property index : Int32 = 0
   property font_size : Int32 = 11
   property font_name : String = "Calibri"
@@ -13,6 +26,7 @@ class CrystalXlsx::Format
   def initialize(@num_form_id = 0, @font_size : Int32 = 11, @font_name : String = "Calibri", @bold : Bool = false, @bg_color : String? = nil, @text_color : String? = nil, @border : Bool = false, @horizontal_alignment : String? = nil, @vertical_alignment : String? = nil)
   end
 
+  # Merges this format with new options.
   def merge(**args)
     CrystalXlsx::Format.new(
       num_form_id: args[:num_form_id]? || num_form_id,
@@ -27,6 +41,7 @@ class CrystalXlsx::Format
     )
   end
 
+  # Generates the font XML.
   def to_font_xml(xml)
     xml.element("font") do
       xml.element("sz", val: font_size)
@@ -36,6 +51,7 @@ class CrystalXlsx::Format
     end
   end
 
+  # Generates the fill XML.
   def to_fill_xml(xml)
     unless text_color || bg_color
       xml.element("fill") do
@@ -52,9 +68,8 @@ class CrystalXlsx::Format
     end
   end
 
+  # Generates the border XML.
   def to_border_xml(xml)
-    # return nil unless border
-
     xml.element("border") do
       xml.element("left")
       xml.element("right")
@@ -63,14 +78,29 @@ class CrystalXlsx::Format
     end
   end
 
+  # Generates the format XML.
   def to_xml(xml)
-    xml.element("xf", numFmtId: num_form_id, fontId: font_id, fillId: (text_color || bg_color) ? font_id : 0, borderId: border? ? font_id : 0, applyFont: "1", applyFill: (text_color || bg_color) ? 1 : 0, applyBorder: border? ? 1 : 0, applyAlignment: (horizontal_alignment || vertical_alignment) ? 1 : 0) do
-      if horizontal_alignment || vertical_alignment
-        xml.element("alignment", horizontal: horizontal_alignment, vertical: vertical_alignment)
+    has_fill = text_color || bg_color
+    has_border = border?
+    has_alignment = horizontal_alignment || vertical_alignment
+    
+    CrystalXlsx.xml_element("xf", 
+      numFmtId: num_form_id, 
+      fontId: font_id, 
+      fillId: has_fill ? font_id : 0, 
+      borderId: has_border ? font_id : 0, 
+      applyFont: "1", 
+      applyFill: has_fill ? 1 : 0, 
+      applyBorder: has_border ? 1 : 0, 
+      applyAlignment: has_alignment ? 1 : 0
+    ) do
+      if has_alignment
+        CrystalXlsx.xml_element("alignment", horizontal: horizontal_alignment, vertical: vertical_alignment)
       end
     end
   end
 
+  # Returns the font ID (same as format index).
   def font_id
     index
   end

@@ -56,7 +56,7 @@ describe CrystalXlsx::Worksheet do
   describe "hyperlinks" do
     it "should add URL hyperlink" do
       worksheet = CrystalXlsx::Worksheet.new("Sheet1")
-      worksheet.add_hyperlink(0, 0, "https://example.com", "Click here")
+      worksheet.link(0, 0, "https://example.com", "Click here")
       worksheet.hyperlinks.size.should eq(1)
       worksheet.hyperlinks.first.cell_ref.should eq("A1")
       worksheet.hyperlinks.first.url.should eq("https://example.com")
@@ -65,7 +65,7 @@ describe CrystalXlsx::Worksheet do
     it "should add worksheet hyperlink" do
       worksheet1 = CrystalXlsx::Worksheet.new("Sheet1")
       worksheet2 = CrystalXlsx::Worksheet.new("Sheet2")
-      worksheet1.add_worksheet_hyperlink(0, 0, worksheet2, "B5", "Go to Sheet2")
+      worksheet1.link_to_sheet(0, 0, worksheet2, "B5", "Go to Sheet2")
       worksheet1.hyperlinks.size.should eq(1)
       worksheet1.hyperlinks.first.target_worksheet.should eq(worksheet2)
       worksheet1.hyperlinks.first.target_cell.should eq("B5")

@@ -1,5 +1,16 @@
 require "compress/zip"
 
+# Represents an Excel workbook with multiple worksheets.
+# 
+# Example:
+# ```
+# workbook = CrystalXlsx::Workbook.new
+# workbook.sheet("Data") do |sheet|
+#   sheet.add(["Name", "Age"])
+#   sheet.add(["Alice", 25])
+# end
+# workbook.save("output.xlsx")
+# ```
 class CrystalXlsx::Workbook
   # Properties
   getter worksheets = [] of Worksheet
@@ -12,7 +23,15 @@ class CrystalXlsx::Workbook
   # Configuration
   property? enable_shared_strings = true
 
-  # Create a new worksheet
+  # Creates a new worksheet with the given name and yields it to the block.
+  # 
+  # Example:
+  # ```
+  # workbook.sheet("Sales") do |sheet|
+  #   sheet.add(["Product", "Revenue"])
+  #   sheet.add(["Widget", 1000])
+  # end
+  # ```
   def sheet(name : String, &block)
     worksheet = Worksheet.new(name, self)
     @worksheets << worksheet
@@ -20,71 +39,67 @@ class CrystalXlsx::Workbook
     worksheet
   end
 
-  # Create a new worksheet without a block
+  # Creates a new worksheet with the given name.
+  # 
+  # Example:
+  # ```
+  # sheet = workbook.sheet("Data")
+  # sheet.add(["A", "B", "C"])
+  # ```
   def sheet(name : String) : Worksheet
     worksheet = Worksheet.new(name, self)
     @worksheets << worksheet
     worksheet
   end
 
-  # Add a style format
+  # Creates a new style format with the given options.
+  # 
+  # Example:
+  # ```
+  # format = workbook.style(font_size: 12, bold: true, text_color: "FF0000")
+  # sheet.add(["Header"], format)
+  # ```
   def style(**options) : Format
     style.add_format(**options)
   end
 
-  # Add a style format from existing format
+  # Creates a new style format from an existing format.
   def style(format : Format) : Format
     style.add_format(format)
   end
 
-  # Save workbook to file
+  # Saves the workbook to a file.
+  # 
+  # Example:
+  # ```
+  # workbook.save("output.xlsx")
+  # ```
   def save(filename : String)
     File.open(filename, "w") do |file|
       write_to(file)
     end
   end
 
-  # Write workbook to IO
+  # Writes the workbook to an IO stream.
   def write_to(io : IO)
     Compress::Zip::Writer.open(io) do |zip|
       build_zip_contents(zip)
     end
   end
 
-  # Get workbook as string
+  # Returns the workbook as a string.
   def to_s : String
     io = IO::Memory.new
     write_to(io)
     io.to_s
   end
 
-  # Get workbook as IO
+  # Returns the workbook as an IO stream.
   def to_io : IO
     stream = IO::Memory.new
     write_to(stream)
     stream.rewind
     stream
-  end
-
-  # Legacy methods for backward compatibility
-  def add_worksheet(name, &block)
-    sheet(name, &block)
-  end
-
-  def add_worksheet(name)
-    sheet(name)
-  end
-
-  def add_format(**options)
-    style(**options)
-  end
-
-  def add_format(format : Format)
-    style(format)
-  end
-
-  def close(filename = "./temp.xlsx")
-    save(filename)
   end
 
   private def build_zip_contents(zip)

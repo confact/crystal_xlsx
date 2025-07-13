@@ -1,3 +1,14 @@
+# Represents a worksheet in an Excel workbook.
+# 
+# Example:
+# ```
+# sheet = workbook.sheet("Data")
+# sheet.add(["Name", "Age"])
+# sheet.add(["Alice", 25])
+# sheet.formula(1, 2, "SUM(B2:B10)")
+# sheet.link(0, 0, "https://example.com", "More info")
+# sheet.merge("A1:B1")
+# ```
 class CrystalXlsx::Worksheet
   # Properties
   getter name : String
@@ -13,7 +24,13 @@ class CrystalXlsx::Worksheet
   def initialize(@name : String, @workbook : Workbook? = nil)
   end
 
-  # Add data to the worksheet
+  # Adds data to the worksheet as a new row.
+  # 
+  # Example:
+  # ```
+  # sheet.add(["Product", "Price", "Quantity"])
+  # sheet.add(["Widget", 10.99, 5])
+  # ```
   def add(data : Row::ValuesTypes, format : Format? = nil) : Row
     raise "max columns exceeded" if data.size > CrystalXlsx::MAX_COLUMNS
 
@@ -23,126 +40,161 @@ class CrystalXlsx::Worksheet
     row
   end
 
-  # Add data to the worksheet (alias)
+  # Adds data to the worksheet (alias for add).
   def <<(data : Row::ValuesTypes)
     add(data)
   end
 
-  # Add a row with a block
+  # Adds a row with a block for building the row data.
+  # 
+  # Example:
+  # ```
+  # sheet.row do |row_data|
+  #   row_data << "Product"
+  #   row_data << "Price"
+  #   row_data << "Quantity"
+  # end
+  # ```
   def row(&block)
     row_data = [] of Cell::ValueTypes
     yield row_data
     add(row_data)
   end
 
-  # Get a row by index
+  # Gets a row by index.
   def row(index : Int32) : Row
     rows[index]
   end
 
-  # Get a cell by row and column
+  # Gets a cell by row and column indices.
   def cell(row : Int32, column : Int32) : Cell
     rows[row][column] || raise "Cell not found"
   end
 
-  # Get a cell by sheet index (e.g., "A1")
+  # Gets a cell by cell reference (e.g., "A1").
   def cell(index : String) : Cell
     row, column = parse_cell_index(index)
     cell(row, column)
   end
 
-  # Add a formula to a cell
+  # Adds a formula to a cell.
+  # 
+  # Example:
+  # ```
+  # sheet.formula(1, 2, Formula::Sum.new("B2:B10"))
+  # ```
   def formula(row : Int32, column : Int32, formula : Formula)
     cell(row, column).formula = formula
   end
 
-  # Add a formula string to a cell
+  # Adds a formula string to a cell.
+  # 
+  # Example:
+  # ```
+  # sheet.formula(1, 2, "SUM(B2:B10)")
+  # ```
   def formula(row : Int32, column : Int32, formula_str : String)
     cell(row, column).set_formula_string(formula_str)
   end
 
-  # Set column width
+  # Sets the width of a column.
+  # 
+  # Example:
+  # ```
+  # sheet.column_width(0, 20)  # Set column A width to 20
+  # ```
   def column_width(column : Int32, width : Float64 | Int32)
     @cols.add_column_width(column, width.to_f)
   end
 
-  # Set multiple column widths
+  # Sets multiple column widths at once.
+  # 
+  # Example:
+  # ```
+  # sheet.column_widths = [20, 15, 25, 10]  # Set widths for columns A, B, C, D
+  # ```
   def column_widths=(widths : Array(Float64 | Int32))
     widths.each_with_index do |width, index|
       column_width(index, width.to_f)
     end
   end
 
-  # Freeze panes
+  # Freezes panes at the specified position.
+  # 
+  # Example:
+  # ```
+  # sheet.freeze_pane(1, 1, "B2")  # Freeze at row 1, column 1
+  # ```
   def freeze_pane(x_split : Int32, y_split : Int32, top_left_cell : String = "A2")
     @sheetviews.add_pane(x_split, y_split, top_left_cell, "bottomLeft", "frozen")
   end
 
-  # Freeze the first row
+  # Freezes the first N rows.
+  # 
+  # Example:
+  # ```
+  # sheet.freeze_row(1)  # Freeze the first row
+  # ```
   def freeze_row(row : Int32)
     freeze_pane(0, row, "A#{row + 1}")
   end
 
-  # Add a hyperlink
+  # Adds a hyperlink to a cell.
+  # 
+  # Example:
+  # ```
+  # sheet.link(0, 0, "https://example.com", "Click here")
+  # ```
   def link(row : Int32, column : Int32, url : String, text : String? = nil)
     cell_ref = "#{('A'.ord + column).chr}#{row + 1}"
     hyperlink = Hyperlink.new(cell_ref, url, text)
     @hyperlinks << hyperlink
   end
 
-  # Add a hyperlink by cell reference
+  # Adds a hyperlink by cell reference.
+  # 
+  # Example:
+  # ```
+  # sheet.link("A1", "https://example.com", "Click here")
+  # ```
   def link(cell_ref : String, url : String, text : String? = nil)
     hyperlink = Hyperlink.new(cell_ref, url, text)
     @hyperlinks << hyperlink
   end
 
-  # Add a worksheet link
+  # Adds a link to another worksheet cell.
+  # 
+  # Example:
+  # ```
+  # sheet.link_to_sheet(0, 0, other_sheet, "A1", "Go to other sheet")
+  # ```
   def link_to_sheet(row : Int32, column : Int32, target_worksheet : Worksheet, target_cell : String, text : String? = nil)
     cell_ref = "#{('A'.ord + column).chr}#{row + 1}"
     hyperlink = Hyperlink.new_worksheet_link(cell_ref, target_worksheet, target_cell, text)
     @hyperlinks << hyperlink
   end
 
-  # Merge cells
+  # Merges a range of cells.
+  # 
+  # Example:
+  # ```
+  # sheet.merge("A1:B2")  # Merge cells A1 through B2
+  # ```
   def merge(range : String)
     @merged_cells << range
   end
 
-  # Merge cells by from/to
+  # Merges cells from one reference to another.
+  # 
+  # Example:
+  # ```
+  # sheet.merge("A1", "C3")  # Merge cells A1 through C3
+  # ```
   def merge(from : String, to : String)
     @merged_cells << "#{from}:#{to}"
   end
 
-  # Legacy methods for backward compatibility
-  def add_row(data : Row::ValuesTypes, format : Format? = nil) : Row
-    add(data, format)
-  end
-
-  def add_formula(row : Int32, column : Int32, formula : Formula)
-    self.formula(row, column, formula)
-  end
-
-  def add_hyperlink(row : Int32, column : Int32, url : String, display_text : String? = nil)
-    link(row, column, url, display_text)
-  end
-
-  def add_hyperlink(cell_ref : String, url : String, display_text : String? = nil)
-    link(cell_ref, url, display_text)
-  end
-
-  def add_worksheet_hyperlink(row : Int32, column : Int32, target_worksheet : Worksheet, target_cell : String, display_text : String? = nil)
-    link_to_sheet(row, column, target_worksheet, target_cell, display_text)
-  end
-
-  def merge_cells(range : String)
-    merge(range)
-  end
-
-  def merge_cells(from : String, to : String)
-    merge(from, to)
-  end
-
-  # Generate XML
+  # Generates the XML representation of the worksheet.
   def to_xml(io : IO)
     XML.build(io, indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("worksheet", 
