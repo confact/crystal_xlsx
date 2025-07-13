@@ -44,7 +44,7 @@ class CrystalXlsx::Hyperlink
 
   def relationship_target : String
     if target_worksheet
-      "worksheets/#{target_worksheet.name}.xml"
+      "worksheets/#{target_worksheet.try(&.name) || "Sheet"}.xml"
     else
       url || ""
     end

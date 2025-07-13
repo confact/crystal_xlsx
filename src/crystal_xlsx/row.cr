@@ -33,6 +33,9 @@ class CrystalXlsx::Row
   end
 
   def [](index)
+    if index < 0 || index >= @cells.size
+      raise "Cell not found"
+    end
     @cells[index]
   end
 

@@ -42,4 +42,32 @@ describe CrystalXlsx do
       workbook.worksheets.size.should eq(1)
     end
   end
+
+  describe "edge cases" do
+    it "should handle an empty workbook" do
+      workbook = CrystalXlsx::Workbook.new
+      workbook.worksheets.size.should eq(0)
+      workbook.to_s
+    end
+
+    it "should handle an empty sheet" do
+      workbook = CrystalXlsx::Workbook.new
+      sheet = workbook.sheet("Empty")
+      sheet.rows.size.should eq(0)
+      workbook.to_s
+    end
+
+    it "should raise if exceeding max columns" do
+      workbook = CrystalXlsx::Workbook.new
+      sheet = workbook.sheet("Test")
+      expect_raises(Exception, "max columns exceeded") { sheet.add(Array.new(CrystalXlsx::MAX_COLUMNS + 1, 1)) }
+    end
+
+    it "should raise if accessing invalid cell reference" do
+      workbook = CrystalXlsx::Workbook.new
+      sheet = workbook.sheet("Test")
+      sheet.add([1, 2, 3])
+      expect_raises(Exception, "Cell not found") { sheet.cell(0, 10) }
+    end
+  end
 end

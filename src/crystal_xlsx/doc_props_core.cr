@@ -6,12 +6,12 @@ class CrystalXlsx::DocPropsCore
         xml.element("dc:title")
         xml.element("dc:subject")
         xml.element("dc:creator") do
-          xml.text("#{CrystalXlsx::NAME} #{CrystalXlsx::VERSION}")
+          xml.text("CrystalXlsx #{CrystalXlsx::VERSION}")
         end
         xml.element("cp:keywords")
         xml.element("dc:description")
         xml.element("cp:lastModifiedBy") do
-          xml.text("#{CrystalXlsx::NAME} #{CrystalXlsx::VERSION}")
+          xml.text("CrystalXlsx #{CrystalXlsx::VERSION}")
         end
         xml.element("dcterms:created", "xsi:type": "dcterms:W3CDTF") do
           xml.text(Time::Format::ISO_8601_DATE_TIME.format(time))
