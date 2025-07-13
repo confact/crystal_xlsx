@@ -28,7 +28,7 @@ describe CrystalXlsx::Cols do
       xml = XML.build_fragment do |xml|
         cols.to_xml(xml)
       end
-      xml.should match(/<cols><col min="1" max="1" width="10.0" customWidth="1"\/><col min="2" max="2" width="20.0" customWidth="1"\/><\/cols>/)
+      xml.should match(/<cols><col min="0" max="0" width="10.0" customWidth="1"\/><col min="1" max="1" width="20.0" customWidth="1"\/><\/cols>/)
     end
   end
 end
