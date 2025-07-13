@@ -1,15 +1,4 @@
 # Represents cell formatting in Excel.
-# 
-# Example:
-# ```
-# format = Format.new(
-#   font_size: 12,
-#   bold: true,
-#   text_color: "FF0000",
-#   bg_color: "FFFF00",
-#   horizontal_alignment: "center"
-# )
-# ```
 class CrystalXlsx::Format
   # Properties
   property index : Int32 = 0
@@ -63,7 +52,7 @@ class CrystalXlsx::Format
     xml.element("fill") do
       xml.element("patternFill", patternType: "solid") do
         xml.element("fgColor", rgb: "FF#{bg_color}") if bg_color
-        xml.element("bgColor", indexed: "0") # This sets bg color to auto
+        xml.element("bgColor", indexed: "0")
       end
     end
   end
@@ -100,11 +89,6 @@ class CrystalXlsx::Format
     end
   end
 
-  # Returns the font ID (same as format index).
-  def font_id
-    index
-  end
-
   # Boolean property accessors
   def bold? : Bool
     bold
@@ -112,5 +96,10 @@ class CrystalXlsx::Format
 
   def border? : Bool
     border
+  end
+
+  # Returns the font ID (same as format index).
+  def font_id
+    index
   end
 end

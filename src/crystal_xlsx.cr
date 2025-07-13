@@ -1,8 +1,7 @@
 require "xml"
-require "./crystal_xlsx/formula/*"
 
 # Load files in dependency order to avoid circular dependencies
-require "./crystal_xlsx/format_new.cr"
+require "./crystal_xlsx/format.cr"
 require "./crystal_xlsx/row.cr"
 require "./crystal_xlsx/cell.cr"
 require "./crystal_xlsx/worksheet.cr"
@@ -74,3 +73,6 @@ module CrystalXlsx
     workbook
   end
 end
+
+# Load formula files after the module is defined
+require "./crystal_xlsx/formula/*"
