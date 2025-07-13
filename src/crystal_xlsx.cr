@@ -2,7 +2,7 @@ require "xml"
 require "./crystal_xlsx/formula/*"
 
 # Load files in dependency order to avoid circular dependencies
-require "./crystal_xlsx/format.cr"
+require "./crystal_xlsx/format_new.cr"
 require "./crystal_xlsx/row.cr"
 require "./crystal_xlsx/cell.cr"
 require "./crystal_xlsx/worksheet.cr"
@@ -29,13 +29,6 @@ module CrystalXlsx
   EPOCH = Time.utc(1899, 12, 30).to_unix_f
   DAY_IN_SECONDS = 86_400
 
-  # Macro for common XML attributes
-  macro xml_attrs(**attrs)
-    {% for key, value in attrs %}
-      xml.attribute({{key}}, {{value}})
-    {% end %}
-  end
-
   # Macro for common cell types
   macro cell_type_for(value_type)
     case {{value_type}}
@@ -54,15 +47,6 @@ module CrystalXlsx
         xml.attribute({{key.stringify}}, {{value}})
       {% end %}
       {{block}}
-    end
-  end
-
-  # Macro for simple XML element with attributes
-  macro xml_element_simple(name, **attrs)
-    xml.element({{name.id.stringify}}) do
-      {% for key, value in attrs %}
-        xml.attribute({{key.stringify}}, {{value}})
-      {% end %}
     end
   end
 
